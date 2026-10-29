@@ -553,7 +553,10 @@ foreach ($fDir in $fontCandidates) {
                             </Grid>
                             <ProgressBar Name="PbRam" Height="3" Background="{DynamicResource Line}" Foreground="#FFFFFF" BorderThickness="0" Value="0" Margin="0,2,0,5"/>
 
-                            <TextBlock Text="v3.5 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" Margin="0,2,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock Text="v3.5 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
+                                <Button Name="BtnCheckUpdates" Style="{StaticResource OutlineButton}" Content="VERIFICAR ATUALIZAÃ‡ÃƒO" FontSize="8.5" Padding="6,2" Margin="6,0,0,0" ToolTip="Verificar novas versÃµes no servidor oficial"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
@@ -1931,6 +1934,41 @@ foreach ($fDir in $fontCandidates) {
                             <Button Name="BtnModalSuccessOk" Content="CONCLU&#x00CD;DO" Style="{StaticResource PrimaryButton}"
                                     Width="180" Height="36" FontSize="12.5" FontWeight="Bold" HorizontalAlignment="Center"/>
                         </StackPanel>
+
+                        <!-- 3. ESTADO DE ATUALIZACAO DISPONIVEL -->
+                        <StackPanel Name="PanelModalUpdate" Visibility="Collapsed" HorizontalAlignment="Center">
+                            <!-- Icone de Nuvem / Download Neon Vermelho MTZ -->
+                            <Border Width="68" Height="68" Background="#240A0D" BorderBrush="#FF1E27" BorderThickness="2"
+                                    CornerRadius="34" Margin="0,0,0,16" HorizontalAlignment="Center">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#FF1E27" BlurRadius="25" ShadowDepth="0" Opacity="0.5"/>
+                                </Border.Effect>
+                                <TextBlock Text="&#xE896;" FontFamily="{StaticResource Icons}" FontSize="30"
+                                           Foreground="#FF1E27" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <TextBlock Name="TxtModalUpdateTitle" Text="NOVA VERSÃƒO DISPONÃVEL"
+                                       FontFamily="{DynamicResource Heading}" FontSize="17" FontWeight="Bold" Foreground="#FFFFFF"
+                                       HorizontalAlignment="Center" Margin="0,0,0,6"/>
+
+                            <TextBlock Name="TxtModalUpdateVersion" Text="Painel MTZ v3.6 Pro"
+                                       FontFamily="{DynamicResource Heading}" FontSize="13" Foreground="#FF1E27"
+                                       HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+                            <Border Background="#0A0A0E" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,20" MaxWidth="380">
+                                <ScrollViewer MaxHeight="120" VerticalScrollBarVisibility="Auto">
+                                    <TextBlock Name="TxtModalUpdateChangelog" Text="Melhorias e otimizaÃ§Ãµes de sistema."
+                                               FontSize="11.5" Foreground="#D0D0D8" TextWrapping="Wrap" LineHeight="17"/>
+                                </ScrollViewer>
+                            </Border>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Button Name="BtnModalUpdateNow" Content="ATUALIZAR AGORA" Style="{StaticResource PrimaryButton}"
+                                        Width="170" Height="36" FontSize="12" FontWeight="Bold" Margin="0,0,10,0"/>
+                                <Button Name="BtnModalUpdateLater" Content="DEPOIS" Style="{StaticResource OutlineButton}"
+                                        Width="110" Height="36" FontSize="12" FontWeight="Bold"/>
+                            </StackPanel>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -2294,6 +2332,13 @@ $pbModalProgress       = $window.FindName("PbModalProgress")
 $txtModalSuccessTitle  = $window.FindName("TxtModalSuccessTitle")
 $txtModalSuccessSub    = $window.FindName("TxtModalSuccessSub")
 $btnModalSuccessOk     = $window.FindName("BtnModalSuccessOk")
+$panelModalUpdate      = $window.FindName("PanelModalUpdate")
+$txtModalUpdateTitle   = $window.FindName("TxtModalUpdateTitle")
+$txtModalUpdateVersion = $window.FindName("TxtModalUpdateVersion")
+$txtModalUpdateChangelog = $window.FindName("TxtModalUpdateChangelog")
+$btnModalUpdateNow     = $window.FindName("BtnModalUpdateNow")
+$btnModalUpdateLater   = $window.FindName("BtnModalUpdateLater")
+$btnCheckUpdates       = $window.FindName("BtnCheckUpdates")
 
 if ($bmp -and $imgModalLogo) {
     try { $imgModalLogo.Source = $bmp } catch {}
@@ -2394,6 +2439,102 @@ function Show-ModalOverlay([string]$loadingTitle, [string]$loadingSub) {
     [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
 }
 
+function Show-ModalUpdate([string]$vTitle, [string]$vNum, [string]$vChangelog, [string]$vUrl) {
+    if (-not $overlayModalContainer) { return }
+    Stop-ModalRingSpinner
+
+    $global:pendingUpdateUrl = $vUrl
+
+    if ($txtModalUpdateTitle)     { $txtModalUpdateTitle.Text = "NOVA VERSÃƒO DISPONÃVEL" }
+    if ($txtModalUpdateVersion)   { $txtModalUpdateVersion.Text = "$vTitle ($vNum)" }
+    if ($txtModalUpdateChangelog) { $txtModalUpdateChangelog.Text = $vChangelog }
+
+    if ($panelModalLoading) { $panelModalLoading.Visibility = [System.Windows.Visibility]::Collapsed }
+    if ($panelModalSuccess) { $panelModalSuccess.Visibility = [System.Windows.Visibility]::Collapsed }
+    if ($panelModalUpdate)  { $panelModalUpdate.Visibility  = [System.Windows.Visibility]::Visible }
+
+    $overlayModalContainer.Visibility = [System.Windows.Visibility]::Visible
+    try {
+        $animFade = New-Object System.Windows.Media.Animation.DoubleAnimation(0.0, 1.0, [TimeSpan]::FromMilliseconds(180))
+        $overlayDimmer.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $animFade)
+
+        $animCard = New-Object System.Windows.Media.Animation.DoubleAnimation(0.0, 1.0, [TimeSpan]::FromMilliseconds(220))
+        $cardModalCentral.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $animCard)
+        if ($modalCardScale) {
+            $animScale = New-Object System.Windows.Media.Animation.DoubleAnimation(0.92, 1.0, [TimeSpan]::FromMilliseconds(240))
+            $modalCardScale.BeginAnimation([System.Windows.Media.ScaleTransform]::ScaleXProperty, $animScale)
+            $modalCardScale.BeginAnimation([System.Windows.Media.ScaleTransform]::ScaleYProperty, $animScale)
+        }
+    } catch {}
+}
+
+function Check-MathzUpdate([bool]$interactive = $false) {
+    $currentVersionCode = 350
+    $updateManifestUrl = "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/version.json"
+
+    if ($interactive) {
+        Log-Hud "Verificando se ha atualizacoes no servidor oficial MTZ..."
+    }
+
+    try {
+        $json = Invoke-RestMethod -Uri $updateManifestUrl -Method Get -TimeoutSec 6 -Headers @{ "User-Agent" = "MathzControlPanel" }
+        if ($json -and $json.versionCode -gt $currentVersionCode) {
+            $changelog = if ($json.changelog) { ($json.changelog -join "`n- ") } else { "Melhorias de desempenho e novas correcoes de sistema." }
+            $changelog = "- " + $changelog
+            Show-ModalUpdate $json.title $json.version $changelog $json.downloadUrl
+            Log-Hud "Nova versao encontrada: $($json.version)!"
+        } else {
+            if ($interactive) {
+                Log-Hud "Voce ja esta com a versao mais recente instalada (v3.5 Pro)!"
+                [System.Windows.MessageBox]::Show("Voce ja esta utilizando a versao mais recente do Painel de Comando MTZ (v3.5 Pro).`n`nNenhuma atualizacao necessaria no momento.", "Painel de Comando MTZ", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information) | Out-Null
+            }
+        }
+    } catch {
+        if ($interactive) {
+            Log-Hud "Nao foi possivel verificar atualizacoes no momento."
+        }
+    }
+}
+
+function Start-MathzSelfUpdate {
+    if (-not $global:pendingUpdateUrl) { return }
+    $url = $global:pendingUpdateUrl
+
+    Show-ModalOverlay "BAIXANDO ATUALIZACAO MTZ" "Transferindo nova versao dos servidores oficiais do Painel..."
+
+    $disp = [System.Windows.Threading.DispatcherTimer]::new()
+    $disp.Interval = [TimeSpan]::FromMilliseconds(600)
+    $disp.Add_Tick({
+        $disp.Stop()
+        try {
+            $tempExe = Join-Path $env:TEMP "MathzControlPanel_New.exe"
+            if (Test-Path $tempExe) { Remove-Item $tempExe -Force }
+
+            $wc = New-Object System.Net.WebClient
+            $wc.Headers.Add("User-Agent", "MathzControlPanel-Updater")
+            $wc.DownloadFile($url, $tempExe)
+
+            if (-not (Test-Path $tempExe) -or (Get-Item $tempExe).Length -lt 100KB) {
+                throw "Arquivo de atualizacao baixado esta incompleto."
+            }
+
+            $runningExe = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+            if ($runningExe -like "*powershell*") {
+                $runningExe = Join-Path (Get-Location).Path "MathzControlPanel.exe"
+            }
+
+            $cmd = "Start-Sleep -Seconds 1; Move-Item -LiteralPath '$tempExe' -Destination '$runningExe' -Force; Start-Process -FilePath '$runningExe'"
+            Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile", "-WindowStyle", "Hidden", "-Command", $cmd -WindowStyle Hidden
+            Exit-MathzCleanly
+        } catch {
+            Hide-ModalOverlay
+            Log-Hud "Erro ao atualizar: $_"
+            [System.Windows.MessageBox]::Show("Falha ao baixar atualizacao:`n`n$_", "Erro de Atualizacao", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error) | Out-Null
+        }
+    })
+    $disp.Start()
+}
+
 function Show-ModalSuccess([string]$successTitle, [string]$successSub) {
     Stop-ModalRingSpinner
 
@@ -2465,6 +2606,24 @@ function Hide-ModalOverlay {
 
 if ($btnModalSuccessOk) {
     $btnModalSuccessOk.Add_Click({ Hide-ModalOverlay })
+
+if ($btnCheckUpdates) {
+    $btnCheckUpdates.Add_Click({
+        Check-MathzUpdate -interactive $true
+    })
+}
+
+if ($btnModalUpdateNow) {
+    $btnModalUpdateNow.Add_Click({
+        Start-MathzSelfUpdate
+    })
+}
+
+if ($btnModalUpdateLater) {
+    $btnModalUpdateLater.Add_Click({
+        Hide-ModalOverlay
+    })
+}
 }
 
 function Invoke-ModalAction([string]$loadingTitle, [string]$loadingSub, [string]$successTitle, [string]$successSub, [scriptblock]$action) {
@@ -5101,6 +5260,15 @@ $window.Add_Loaded({
     $global:hwTimer.Start()
     
     Log-Hud "Painel de Comando MTZ pronto e operacional!"
+    
+    # Checagem silenciosa de atualizacao em segundo plano apos 4 segundos
+    $timerAutoUpdate = New-Object System.Windows.Threading.DispatcherTimer
+    $timerAutoUpdate.Interval = [TimeSpan]::FromSeconds(4)
+    $timerAutoUpdate.Add_Tick({
+        $timerAutoUpdate.Stop()
+        Check-MathzUpdate -interactive $false
+    })
+    $timerAutoUpdate.Start()
 })
 
 $window.Add_Closed({
@@ -5145,5 +5313,4 @@ try {
 
 # Executa Janela WPF
 $window.ShowDialog() | Out-Null
-
 
