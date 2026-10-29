@@ -1,0 +1,17 @@
+{
+  "version": "3.5.0",
+  "versionCode": 350,
+  "releaseDate": "2026-10-29",
+  "title": "Painel de Comando MTZ v3.5 (Ultra 4K & Tipografia Esportiva)",
+  "changelog": [
+    "Renderizacao nativa Ultra HD 4K e Per-Monitor V2 High-DPI sem borrão",
+    "Novas fontes de alta performance: Bebas Neue, Outfit e Orbitron",
+    "Seletor de tipografia com 4 temas na aba Aparência & Cores",
+    "Dimensionamento responsivo e adaptativo para monitores 4K / 2K / 1080p",
+    "Alinhamento de subpixel e aceleracao grafica Direct3D habilitada",
+    "Sistema de atualizacao automatica direta no painel (Auto-Update)"
+  ],
+  "downloadUrl": "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe",
+  "zipUrl": "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel-v3.0.zip",
+  "repository": "https://github.com/Mathzvinicius/MathzControlPanel"
+}
