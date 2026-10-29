@@ -1935,6 +1935,36 @@ foreach ($fDir in $fontCandidates) {
                                     Width="180" Height="36" FontSize="12.5" FontWeight="Bold" HorizontalAlignment="Center"/>
                         </StackPanel>
 
+                        <!-- 2.5 ESTADO DE AVISO / FALHA (QUANDO NÃO FOI POSSÍVEL ATIVAR OU ALTERAR) -->
+                        <StackPanel Name="PanelModalWarning" Visibility="Collapsed" HorizontalAlignment="Center">
+                            <!-- Icone Alerta Neon Laranja/Amarelo (#FFAA00) -->
+                            <Border Width="68" Height="68" Background="#261A05" BorderBrush="#FFAA00" BorderThickness="2"
+                                    CornerRadius="34" Margin="0,0,0,16" HorizontalAlignment="Center">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#FFAA00" BlurRadius="25" ShadowDepth="0" Opacity="0.45"/>
+                                </Border.Effect>
+                                <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource Icons}" FontSize="30"
+                                           Foreground="#FFAA00" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <TextBlock Name="TxtModalWarningTitle" Text="AVISO: OTIMIZA&#x00C7;&#x00C3;O N&#x00C3;O APLICADA"
+                                       FontSize="15.5" FontWeight="Bold" Foreground="#FFFFFF"
+                                       HorizontalAlignment="Center" Margin="0,0,0,8"/>
+
+                            <TextBlock Name="TxtModalWarningSub" Text="A altera&#x00E7;&#x00E3;o n&#x00E3;o p&#x00F4;de ser ativada no sistema operacional."
+                                       FontSize="12" Foreground="#E0E0E0" HorizontalAlignment="Center"
+                                       TextAlignment="Center" MaxWidth="360" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                            <Border Background="#141419" BorderBrush="#33FFAA00" BorderThickness="1" CornerRadius="6"
+                                    Padding="12,8" Margin="0,0,0,20" MaxWidth="360">
+                                <TextBlock Name="TxtModalWarningDetails" Text="A verifica&#x00E7;&#x00E3;o no Registro e Kernel indicou que os valores permanecem no padr&#x00E3;o. Nenhuma altera&#x00E7;&#x00E3;o falsa foi registrada."
+                                           FontSize="11" Foreground="#FFAA00" TextWrapping="Wrap" TextAlignment="Center"/>
+                            </Border>
+
+                            <Button Name="BtnModalWarningOk" Content="ENTENDIDO" Style="{StaticResource OutlineButton}"
+                                    Width="180" Height="36" FontSize="12.5" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
                         <!-- 3. ESTADO DE ATUALIZACAO DISPONIVEL -->
                         <StackPanel Name="PanelModalUpdate" Visibility="Collapsed" HorizontalAlignment="Center">
                             <!-- Icone de Nuvem / Download Neon Vermelho MTZ -->
@@ -2332,6 +2362,11 @@ $pbModalProgress       = $window.FindName("PbModalProgress")
 $txtModalSuccessTitle  = $window.FindName("TxtModalSuccessTitle")
 $txtModalSuccessSub    = $window.FindName("TxtModalSuccessSub")
 $btnModalSuccessOk     = $window.FindName("BtnModalSuccessOk")
+$panelModalWarning     = $window.FindName("PanelModalWarning")
+$txtModalWarningTitle  = $window.FindName("TxtModalWarningTitle")
+$txtModalWarningSub    = $window.FindName("TxtModalWarningSub")
+$txtModalWarningDetails = $window.FindName("TxtModalWarningDetails")
+$btnModalWarningOk     = $window.FindName("BtnModalWarningOk")
 $panelModalUpdate      = $window.FindName("PanelModalUpdate")
 $txtModalUpdateTitle   = $window.FindName("TxtModalUpdateTitle")
 $txtModalUpdateVersion = $window.FindName("TxtModalUpdateVersion")
@@ -2407,6 +2442,8 @@ function Show-ModalOverlay([string]$loadingTitle, [string]$loadingSub) {
 
     if ($panelModalLoading) { $panelModalLoading.Visibility = [System.Windows.Visibility]::Visible }
     if ($panelModalSuccess) { $panelModalSuccess.Visibility = [System.Windows.Visibility]::Collapsed }
+    if ($panelModalWarning) { $panelModalWarning.Visibility = [System.Windows.Visibility]::Collapsed }
+    if ($panelModalUpdate)  { $panelModalUpdate.Visibility  = [System.Windows.Visibility]::Collapsed }
 
     $overlayModalContainer.Visibility = [System.Windows.Visibility]::Visible
     Start-ModalRingSpinner
@@ -2542,6 +2579,8 @@ function Show-ModalSuccess([string]$successTitle, [string]$successSub) {
     if ($txtModalSuccessSub)   { $txtModalSuccessSub.Text   = $successSub }
 
     if ($panelModalLoading) { $panelModalLoading.Visibility = [System.Windows.Visibility]::Collapsed }
+    if ($panelModalWarning) { $panelModalWarning.Visibility = [System.Windows.Visibility]::Collapsed }
+    if ($panelModalUpdate)  { $panelModalUpdate.Visibility  = [System.Windows.Visibility]::Collapsed }
     if ($panelModalSuccess) { $panelModalSuccess.Visibility = [System.Windows.Visibility]::Visible }
 
     try {
@@ -2574,6 +2613,46 @@ function Show-ModalSuccess([string]$successTitle, [string]$successSub) {
     [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
 }
 
+function Show-ModalWarning([string]$warnTitle, [string]$warnSub, [string]$warnDetails = "") {
+    Stop-ModalRingSpinner
+
+    if ($global:modalAutoDismissTimer) {
+        $global:modalAutoDismissTimer.Stop()
+        $global:modalAutoDismissTimer = $null
+    }
+
+    if ($txtModalWarningTitle)   { $txtModalWarningTitle.Text   = $warnTitle }
+    if ($txtModalWarningSub)     { $txtModalWarningSub.Text     = $warnSub }
+    if ($txtModalWarningDetails) {
+        if ([string]::IsNullOrWhiteSpace($warnDetails)) {
+            $txtModalWarningDetails.Text = "A verificação no Registro e Kernel indicou que os valores permanecem no padrão. Execute o painel como Administrador para modificar configurações protegidas."
+        } else {
+            $txtModalWarningDetails.Text = $warnDetails
+        }
+    }
+
+    if ($panelModalLoading) { $panelModalLoading.Visibility = [System.Windows.Visibility]::Collapsed }
+    if ($panelModalSuccess) { $panelModalSuccess.Visibility = [System.Windows.Visibility]::Collapsed }
+    if ($panelModalUpdate)  { $panelModalUpdate.Visibility  = [System.Windows.Visibility]::Collapsed }
+    if ($panelModalWarning) { $panelModalWarning.Visibility = [System.Windows.Visibility]::Visible }
+
+    try {
+        if ($modalCardScale) {
+            $ease = New-Object System.Windows.Media.Animation.ElasticEase
+            $ease.EasingMode = [System.Windows.Media.Animation.EasingMode]::EaseOut
+            $ease.Oscillations = 1
+            $ease.Springiness = 3
+            $animScale = New-Object System.Windows.Media.Animation.DoubleAnimation(0.95, 1.0, [System.Windows.Duration][TimeSpan]::FromMilliseconds(260))
+            $animScale.EasingFunction = $ease
+            $modalCardScale.BeginAnimation([System.Windows.Media.ScaleTransform]::ScaleXProperty, $animScale)
+            $modalCardScale.BeginAnimation([System.Windows.Media.ScaleTransform]::ScaleYProperty, $animScale)
+        }
+    } catch {}
+
+    Log-Hud "AVISO: $warnTitle - $warnSub"
+    [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
+}
+
 function Hide-ModalOverlay {
     if ($global:modalAutoDismissTimer) {
         $global:modalAutoDismissTimer.Stop()
@@ -2581,6 +2660,11 @@ function Hide-ModalOverlay {
     }
     Stop-ModalRingSpinner
     try {
+        if ($panelModalLoading) { $panelModalLoading.Visibility = [System.Windows.Visibility]::Collapsed }
+        if ($panelModalSuccess) { $panelModalSuccess.Visibility = [System.Windows.Visibility]::Collapsed }
+        if ($panelModalWarning) { $panelModalWarning.Visibility = [System.Windows.Visibility]::Collapsed }
+        if ($panelModalUpdate)  { $panelModalUpdate.Visibility  = [System.Windows.Visibility]::Collapsed }
+
         if ($cardModalCentral) {
             $animFade = New-Object System.Windows.Media.Animation.DoubleAnimation(1.0, 0.0, [System.Windows.Duration][TimeSpan]::FromMilliseconds(160))
             $cardModalCentral.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $animFade)
@@ -2604,42 +2688,64 @@ function Hide-ModalOverlay {
     }
 }
 
-if ($btnModalSuccessOk) {
-    $btnModalSuccessOk.Add_Click({ Hide-ModalOverlay })
+if ($btnModalSuccessOk) { $btnModalSuccessOk.Add_Click({ Hide-ModalOverlay }) }
+if ($btnModalWarningOk) { $btnModalWarningOk.Add_Click({ Hide-ModalOverlay }) }
+if ($btnCheckUpdates)   { $btnCheckUpdates.Add_Click({ Check-MathzUpdate -interactive $true }) }
+if ($btnModalUpdateNow) { $btnModalUpdateNow.Add_Click({ Start-MathzSelfUpdate }) }
+if ($btnModalUpdateLater){ $btnModalUpdateLater.Add_Click({ Hide-ModalOverlay }) }
 
-if ($btnCheckUpdates) {
-    $btnCheckUpdates.Add_Click({
-        Check-MathzUpdate -interactive $true
-    })
-}
-
-if ($btnModalUpdateNow) {
-    $btnModalUpdateNow.Add_Click({
-        Start-MathzSelfUpdate
-    })
-}
-
-if ($btnModalUpdateLater) {
-    $btnModalUpdateLater.Add_Click({
-        Hide-ModalOverlay
-    })
-}
-}
-
-function Invoke-ModalAction([string]$loadingTitle, [string]$loadingSub, [string]$successTitle, [string]$successSub, [scriptblock]$action) {
+function Invoke-ModalAction {
+    param(
+        [string]$loadingTitle,
+        [string]$loadingSub,
+        [string]$successTitle,
+        [string]$successSub,
+        [scriptblock]$action,
+        [scriptblock]$verifier = $null,
+        [string]$warnTitle = "AVISO: OTIMIZAÇÃO NÃO APLICADA",
+        [string]$warnSub = "A otimização não pôde ser ativada no sistema operacional.",
+        [string]$warnDetails = ""
+    )
     Show-ModalOverlay $loadingTitle $loadingSub
 
     $timerWait = New-Object System.Windows.Threading.DispatcherTimer
-    $timerWait.Interval = [TimeSpan]::FromMilliseconds(1100)
+    $timerWait.Interval = [TimeSpan]::FromMilliseconds(950)
     $timerWait.Add_Tick({
         $timerWait.Stop()
+        $actionError = $null
         try {
             if ($action) { & $action }
         } catch {
+            $actionError = $_
             Log-Hud "Erro na operacao: $_"
         }
-        Show-ModalSuccess $successTitle $successSub
-        Log-Hud $successTitle
+
+        # Verificação Real e Confiável
+        $isVerified = $true
+        $failReason = ""
+
+        if ($actionError) {
+            $isVerified = $false
+            $failReason = "Erro na execução: $($actionError.Exception.Message)"
+        } elseif ($verifier) {
+            try {
+                $verRes = & $verifier
+                $isVerified = [bool]$verRes
+                if (-not $isVerified) {
+                    $failReason = if ($warnDetails) { $warnDetails } else { "A verificação no Registro e Kernel indicou que os valores permanecem no padrão. Nenhuma alteração falsa foi registrada." }
+                }
+            } catch {
+                $isVerified = $false
+                $failReason = "Falha ao verificar status: $($_.Exception.Message)"
+            }
+        }
+
+        if ($isVerified) {
+            Show-ModalSuccess $successTitle $successSub
+            Log-Hud $successTitle
+        } else {
+            Show-ModalWarning $warnTitle $warnSub $failReason
+        }
     })
     $timerWait.Start()
 }
@@ -2659,11 +2765,34 @@ $btnFooterClose.Add_Click({ Exit-MathzCleanly })
 
 if ($btnApply) {
     $btnApply.Add_Click({
-        Invoke-ModalAction "APLICANDO OTIMIZACOES MTZ" "Gravando diretrizes de desempenho, latencia e ajustes da ISO no Windows..." "OTIMIZACAO APLICADA COM SUCESSO!" "Todas as configuracoes de desempenho, estabilidade de Kernel e perfil de energia foram aplicadas com sucesso!" {
-            Save-ThemeConfig
-            Apply-PanelThemeUI
-            Update-RealHardwareUI
-            Update-MathzTweaksChecklist
+        # Se o usuário estiver na aba de Otimizações da ISO (ou se ViewTweaks estiver visível)
+        if ($global:activeTabName -eq "Tweaks" -or ($viewTweaks -and $viewTweaks.Visibility -eq [System.Windows.Visibility]::Visible)) {
+            Invoke-ModalAction "APLICANDO SUITE COMPLETA DA ISO" `
+                               "Gravando as 8 diretrizes de latencia, IFEO, BCD, HAGS, TCP e telemetria no Windows..." `
+                               "SUITE ISO APLICADA COM SUCESSO!" `
+                               "Todas as 8 otimizações de desempenho para jogos e baixa latência foram gravadas e verificadas no sistema!" `
+                               -action {
+                                   Invoke-AllIsoTweaks
+                               } `
+                               -verifier {
+                                   $count = Update-MathzTweaksChecklist
+                                   return ($count -eq 8)
+                               } `
+                               -warnTitle "AVISO: NEM TODAS AS OTIMIZAÇÕES ATIVARAM" `
+                               -warnSub "Alguns recursos não puderam ser confirmados no sistema." `
+                               -warnDetails "Verifique se o painel foi executado como Administrador. O status real de cada tweak é exibido nos badges individuais."
+        } elseif ($global:activeTabName -eq "Theme") {
+            Invoke-ModalAction "SALVANDO TEMA MTZ" "Gravando paleta de cores e configuracoes visuais..." "TEMA SALVO COM SUCESSO!" "Paleta personalizada aplicada e salva para as proximas sessoes." {
+                Save-ThemeConfig
+                Apply-PanelThemeUI
+            }
+        } else {
+            Invoke-ModalAction "APLICANDO CONFIGURAÇÕES MTZ" "Gravando diretrizes de desempenho e perfil de energia no Windows..." "CONFIGURAÇÕES APLICADAS!" "Perfil de hardware e estado de energia atualizados com sucesso." {
+                Save-ThemeConfig
+                Apply-PanelThemeUI
+                Update-RealHardwareUI
+                Update-MathzTweaksChecklist
+            }
         }
     })
 }
@@ -2759,6 +2888,7 @@ function Animate-ViewIn($targetView) {
 }
 
 function Set-TabActive([string]$tabName) {
+    $global:activeTabName = $tabName
     $brushTransparent = [System.Windows.Media.Brushes]::Transparent
     $brushInactiveFg  = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#8C8C8C")
     $brushActiveFg    = [System.Windows.Media.Brushes]::White
@@ -3708,6 +3838,84 @@ function Update-RealHardwareUI {
 # ==============================================================================
 # 8. SUITE COMPLETA DE OTIMIZACOES DO WINDOWS (BASE DA ISO MATHZ)
 # ==============================================================================
+
+# Funções de Verificação Real e Confiável do Windows
+function Test-IsoTweakMouse {
+    try {
+        $p = Get-ItemProperty "HKCU:\Control Panel\Mouse" -ErrorAction Stop
+        return ($p.MouseSpeed -eq "0" -and $p.MouseThreshold1 -eq "0" -and $p.MouseThreshold2 -eq "0")
+    } catch { return $false }
+}
+
+function Test-IsoTweakHags {
+    try {
+        $hags = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -ErrorAction SilentlyContinue).HwSchMode
+        return ($hags -eq 2)
+    } catch { return $false }
+}
+
+function Test-IsoTweakIfeo {
+    try {
+        $prio = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -ErrorAction SilentlyContinue).Win32PrioritySeparation
+        return ($prio -eq 38)
+    } catch { return $false }
+}
+
+function Test-IsoTweakNagle {
+    try {
+        $nics = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\*" -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -or $_.DhcpIPAddress }
+        if (-not $nics) {
+            $subkeys = Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" -ErrorAction SilentlyContinue
+            if (-not $subkeys) { return $false }
+            foreach ($k in $subkeys) {
+                $p = Get-ItemProperty $k.PSPath -ErrorAction SilentlyContinue
+                if ($p.TcpAckFrequency -eq 1 -and $p.TCPNoDelay -eq 1) { return $true }
+            }
+            return $false
+        }
+        $allOk = $true
+        foreach ($nic in $nics) {
+            if ($nic.TcpAckFrequency -ne 1 -or $nic.TCPNoDelay -ne 1) {
+                $allOk = $false
+                break
+            }
+        }
+        return $allOk
+    } catch { return $false }
+}
+
+function Test-IsoTweakBcd {
+    try {
+        $bcdOut = & bcdedit /enum "{current}" 2>$null
+        $hasDynamic = ($bcdOut -match 'disabledynamictick\s+Yes')
+        $hasTsc     = ($bcdOut -match 'tscsyncpolicy\s+Enhanced')
+        $hasClock   = ($bcdOut -match 'useplatformclock\s+No')
+        return ($hasDynamic -or $hasTsc -or $hasClock)
+    } catch { return $false }
+}
+
+function Test-IsoTweakTelemetry {
+    try {
+        $dtService = Get-Service -Name "DiagTrack" -ErrorAction SilentlyContinue
+        $telemPol  = (Get-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -ErrorAction SilentlyContinue).AllowTelemetry
+        return (($dtService -and $dtService.StartType -eq "Disabled") -or $telemPol -eq 0)
+    } catch { return $false }
+}
+
+function Test-IsoTweakExplorer {
+    try {
+        $msd = (Get-ItemProperty "HKCU:\Control Panel\Desktop" -ErrorAction SilentlyContinue).MenuShowDelay
+        return ($msd -eq "0")
+    } catch { return $false }
+}
+
+function Test-IsoTweakCursor {
+    try {
+        $curArrow = (Get-ItemProperty "HKCU:\Control Panel\Cursors" -ErrorAction SilentlyContinue).Arrow
+        return [bool]($curArrow -and ($curArrow -match '\.cur$' -or $curArrow -match 'Mathz'))
+    } catch { return $false }
+}
+
 function Update-MathzTweaksChecklist {
     try {
         $brushGreenBg = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#05160A")
@@ -3719,13 +3927,7 @@ function Update-MathzTweaksChecklist {
         $appliedCount = 0
 
         # 1. Mouse 1:1 Raw Input
-        $mouseOk = $false
-        try {
-            $mSpeed = (Get-ItemProperty "HKCU:\Control Panel\Mouse" -ErrorAction SilentlyContinue).MouseSpeed
-            $mTh1   = (Get-ItemProperty "HKCU:\Control Panel\Mouse" -ErrorAction SilentlyContinue).MouseThreshold1
-            if ($mSpeed -eq "0" -and $mTh1 -eq "0") { $mouseOk = $true }
-        } catch {}
-
+        $mouseOk = Test-IsoTweakMouse
         if ($mouseOk) {
             $appliedCount++
             if ($badgeStatusMouse) { $badgeStatusMouse.Background = $brushGreenBg; $badgeStatusMouse.BorderBrush = $brushGreenFg }
@@ -3736,12 +3938,7 @@ function Update-MathzTweaksChecklist {
         }
 
         # 2. HAGS (Hardware Accelerated GPU Scheduling)
-        $hagsOk = $false
-        try {
-            $hags = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -ErrorAction SilentlyContinue).HwSchMode
-            if ($hags -eq 2) { $hagsOk = $true }
-        } catch {}
-
+        $hagsOk = Test-IsoTweakHags
         if ($hagsOk) {
             $appliedCount++
             if ($badgeStatusGpu) { $badgeStatusGpu.Background = $brushGreenBg; $badgeStatusGpu.BorderBrush = $brushGreenFg }
@@ -3751,13 +3948,8 @@ function Update-MathzTweaksChecklist {
             if ($txtStatusGpu)   { $txtStatusGpu.Text = "DESATIVADO"; $txtStatusGpu.Foreground = $brushRedFg }
         }
 
-        # 3. IFEO & Prioridade de Kernel (Win32PrioritySeparation = 38 / 0x26)
-        $ifeoOk = $false
-        try {
-            $prio = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -ErrorAction SilentlyContinue).Win32PrioritySeparation
-            if ($prio -eq 38) { $ifeoOk = $true }
-        } catch {}
-
+        # 3. IFEO & Prioridade de Kernel
+        $ifeoOk = Test-IsoTweakIfeo
         if ($ifeoOk) {
             $appliedCount++
             if ($badgeStatusIfeo) { $badgeStatusIfeo.Background = $brushGreenBg; $badgeStatusIfeo.BorderBrush = $brushGreenFg }
@@ -3767,19 +3959,8 @@ function Update-MathzTweaksChecklist {
             if ($txtStatusIfeo)   { $txtStatusIfeo.Text = "PADRAO (2)"; $txtStatusIfeo.Foreground = $brushRedFg }
         }
 
-        # 4. TCP Nagle & Latencia de Rede (TcpAckFrequency = 1 & TCPNoDelay = 1)
-        $tcpOk = $false
-        try {
-            $nics = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\*" -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -or $_.DhcpIPAddress }
-            if ($nics) {
-                $allOk = $true
-                foreach ($nic in $nics) {
-                    if ($nic.TcpAckFrequency -ne 1 -or $nic.TCPNoDelay -ne 1) { $allOk = $false; break }
-                }
-                $tcpOk = $allOk
-            }
-        } catch {}
-
+        # 4. TCP Nagle & Latencia de Rede
+        $tcpOk = Test-IsoTweakNagle
         if ($tcpOk) {
             $appliedCount++
             if ($badgeStatusNagle) { $badgeStatusNagle.Background = $brushGreenBg; $badgeStatusNagle.BorderBrush = $brushGreenFg }
@@ -3789,15 +3970,8 @@ function Update-MathzTweaksChecklist {
             if ($txtStatusNagle)   { $txtStatusNagle.Text = "DESATIVADO"; $txtStatusNagle.Foreground = $brushRedFg }
         }
 
-        # 5. BCDedit & Latencia (dynamicick disabled)
-        $bcdOk = $false
-        try {
-            $bcdOut = & bcdedit /enum "{current}" 2>$null
-            if ($bcdOut -match 'dynamicick\s+No|tscsyncpolicy\s+Enhanced|useplatformclock\s+No') {
-                $bcdOk = $true
-            }
-        } catch {}
-
+        # 5. BCDedit & Latencia
+        $bcdOk = Test-IsoTweakBcd
         if ($bcdOk) {
             $appliedCount++
             if ($badgeStatusBcd) { $badgeStatusBcd.Background = $brushGreenBg; $badgeStatusBcd.BorderBrush = $brushGreenFg }
@@ -3808,15 +3982,7 @@ function Update-MathzTweaksChecklist {
         }
 
         # 6. Telemetria e Diagnosticos da Microsoft
-        $telemOk = $false
-        try {
-            $dtService = Get-Service -Name "DiagTrack" -ErrorAction SilentlyContinue
-            $telemPol  = (Get-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -ErrorAction SilentlyContinue).AllowTelemetry
-            if (($dtService -and $dtService.StartType -eq "Disabled") -or $telemPol -eq 0) {
-                $telemOk = $true
-            }
-        } catch {}
-
+        $telemOk = Test-IsoTweakTelemetry
         if ($telemOk) {
             $appliedCount++
             if ($badgeStatusTelemetry) { $badgeStatusTelemetry.Background = $brushGreenBg; $badgeStatusTelemetry.BorderBrush = $brushGreenFg }
@@ -3826,13 +3992,8 @@ function Update-MathzTweaksChecklist {
             if ($txtStatusTelemetry)   { $txtStatusTelemetry.Text = "ATIVA"; $txtStatusTelemetry.Foreground = $brushRedFg }
         }
 
-        # 7. Explorer & Menus Responsivos (MenuShowDelay = "0")
-        $expOk = $false
-        try {
-            $msd = (Get-ItemProperty "HKCU:\Control Panel\Desktop" -ErrorAction SilentlyContinue).MenuShowDelay
-            if ($msd -eq "0") { $expOk = $true }
-        } catch {}
-
+        # 7. Explorer & Menus Responsivos
+        $expOk = Test-IsoTweakExplorer
         if ($expOk) {
             $appliedCount++
             if ($badgeStatusExplorer) { $badgeStatusExplorer.Background = $brushGreenBg; $badgeStatusExplorer.BorderBrush = $brushGreenFg }
@@ -3843,12 +4004,7 @@ function Update-MathzTweaksChecklist {
         }
 
         # 8. Cursors Mathz
-        $curOk = $false
-        try {
-            $curArrow = (Get-ItemProperty "HKCU:\Control Panel\Cursors" -ErrorAction SilentlyContinue).Arrow
-            if ($curArrow -and ($curArrow -match '\.cur$' -or $curArrow -match 'Mathz')) { $curOk = $true }
-        } catch {}
-
+        $curOk = Test-IsoTweakCursor
         if ($curOk) {
             $appliedCount++
             if ($badgeStatusCursor) { $badgeStatusCursor.Background = $brushGreenBg; $badgeStatusCursor.BorderBrush = $brushGreenFg }
@@ -3872,12 +4028,14 @@ function Update-MathzTweaksChecklist {
                 $txtTweaksSummary.Foreground    = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FFAA00")
             }
         }
+        return $appliedCount
     } catch {
         Log-Hud "Erro ao auditar checklist de otimizacoes: $_"
+        return 0
     }
 }
 
-# Funcoes Individuais de Tweaks da ISO
+# Funcoes Individuais de Tweaks da ISO com Validacao Real
 function Invoke-IsoTweakMouse {
     $reg = "HKCU:\Control Panel\Mouse"
     Set-ItemProperty -Path $reg -Name "MouseSpeed" -Value "0" -Force
@@ -3894,7 +4052,26 @@ function Invoke-IsoTweakHags {
         New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Force | Out-Null
     }
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "HwSchMode" -Value 2 -Type DWord -Force
-    Log-Hud "HAGS (Agendamento de GPU por Hardware) ativado!"
+
+    # Modo de Jogo & GameDVR do Windows
+    $gb = "HKCU:\Software\Microsoft\GameBar"
+    if (-not (Test-Path $gb)) { New-Item -Path $gb -Force | Out-Null }
+    Set-ItemProperty -Path $gb -Name "AutoGameModeEnabled" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $gb -Name "AllowAutoGameMode" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+
+    $gcs = "HKCU:\System\GameConfigStore"
+    if (-not (Test-Path $gcs)) { New-Item -Path $gcs -Force | Out-Null }
+    Set-ItemProperty -Path $gcs -Name "GameDVR_Enabled" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+
+    $gdvr = "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR"
+    if (-not (Test-Path $gdvr)) { New-Item -Path $gdvr -Force | Out-Null }
+    Set-ItemProperty -Path $gdvr -Name "AppCaptureEnabled" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+
+    $polGdvr = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR"
+    if (-not (Test-Path $polGdvr)) { New-Item -Path $polGdvr -Force | Out-Null }
+    Set-ItemProperty -Path $polGdvr -Name "AllowGameDVR" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+
+    Log-Hud "HAGS (Agendamento de GPU por Hardware) & Modo de Jogo ativados!"
 }
 
 function Invoke-IsoTweakIfeo {
@@ -3902,25 +4079,47 @@ function Invoke-IsoTweakIfeo {
         New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Force | Out-Null
     }
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Value 38 -Type DWord -Force
-    Log-Hud "Prioridade de Kernel ajustada para 38 (0x26 - Foco Máximo em Jogos)!"
+
+    # Prioridade Alta no Kernel para Emuladores e Jogos (IFEO)
+    $emulators = @("HD-Player.exe", "BlueStacksAppRunner.exe", "dnplayer.exe", "Nox.exe", "LdVBoxHeadless.exe")
+    foreach ($exe in $emulators) {
+        $perfKey = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$exe\PerfOptions"
+        if (-not (Test-Path $perfKey)) { New-Item -Path $perfKey -Force | Out-Null }
+        Set-ItemProperty -Path $perfKey -Name "CpuPriorityClass" -Value 3 -Type DWord -Force -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path $perfKey -Name "IoPriority" -Value 3 -Type DWord -Force -ErrorAction SilentlyContinue
+    }
+    Log-Hud "Prioridade de Kernel ajustada para 38 (0x26) e IFEO de alta prioridade configurado!"
 }
 
 function Invoke-IsoTweakNagle {
-    $nics = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\*" -ErrorAction SilentlyContinue
-    foreach ($nic in $nics) {
-        if ($nic.IPAddress -or $nic.DhcpIPAddress) {
-            Set-ItemProperty -Path $nic.PSPath -Name "TcpAckFrequency" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path $nic.PSPath -Name "TCPNoDelay" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+    # Aplica em todas as interfaces de rede no registro
+    $interfacePath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces"
+    if (Test-Path $interfacePath) {
+        Get-ChildItem -Path $interfacePath -ErrorAction SilentlyContinue | ForEach-Object {
+            Set-ItemProperty -Path $_.PSPath -Name "TcpAckFrequency" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $_.PSPath -Name "TCPNoDelay" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $_.PSPath -Name "TcpDelAckTicks" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
         }
     }
-    netsh int tcp set global autotuninglevel=normal 2>$null | Out-Null
-    Log-Hud "TCP Nagle desativado e ACK imediato configurado para menor ping!"
+
+    # Otimização Global de Rede TCP
+    $tcpGlobal = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters"
+    if (Test-Path $tcpGlobal) {
+        Set-ItemProperty -Path $tcpGlobal -Name "DefaultTTL" -Value 64 -Type DWord -Force -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path $tcpGlobal -Name "MaxUserPort" -Value 65534 -Type DWord -Force -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path $tcpGlobal -Name "TcpTimedWaitDelay" -Value 30 -Type DWord -Force -ErrorAction SilentlyContinue
+    }
+
+    & netsh int tcp set global autotuninglevel=normal 2>$null | Out-Null
+    & netsh int tcp set global rss=enabled 2>$null | Out-Null
+    Log-Hud "TCP Nagle desativado e ACK imediato configurado para menor ping em todos os adaptadores!"
 }
 
 function Invoke-IsoTweakBcd {
-    & bcdedit /set dynamicick disabled 2>$null | Out-Null
-    & bcdedit /set tscsyncpolicy Enhanced 2>$null | Out-Null
-    & bcdedit /set useplatformclock false 2>$null | Out-Null
+    # Comandos oficiais do bcdedit no Windows (disabledynamictick Yes, tscsyncpolicy Enhanced, useplatformclock No)
+    & bcdedit /set disabledynamictick yes 2>&1 | Out-Null
+    & bcdedit /set tscsyncpolicy Enhanced 2>&1 | Out-Null
+    & bcdedit /set useplatformclock false 2>&1 | Out-Null
     Log-Hud "BCDedit otimizado: DynamicTick OFF, TSC Sync Enhanced, PlatformClock False!"
 }
 
@@ -3937,10 +4136,18 @@ function Invoke-IsoTweakTelemetry {
 }
 
 function Invoke-IsoTweakExplorer {
-    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value "0" -Force
-    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WaitToKillServiceTimeout" -Value "2000" -Force
-    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "AutoEndTasks" -Value "1" -Force
-    Log-Hud "Menus do Explorer ultra ageis (0 delay de exibicao)!"
+    $regDesk = "HKCU:\Control Panel\Desktop"
+    Set-ItemProperty -Path $regDesk -Name "MenuShowDelay" -Value "0" -Force
+    Set-ItemProperty -Path $regDesk -Name "WaitToKillServiceTimeout" -Value "2000" -Force
+    Set-ItemProperty -Path $regDesk -Name "AutoEndTasks" -Value "1" -Force
+
+    # Desativa pesquisas web e Bing integradas no Menu Iniciar
+    $regSearch = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search"
+    if (-not (Test-Path $regSearch)) { New-Item -Path $regSearch -Force | Out-Null }
+    Set-ItemProperty -Path $regSearch -Name "BingSearchEnabled" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $regSearch -Name "SearchboxTaskbarMode" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+
+    Log-Hud "Menus do Explorer ultra ageis (0 delay de exibicao e busca sem atraso de web)!"
 }
 
 function Invoke-IsoTweakCursor {
@@ -3962,22 +4169,39 @@ function Invoke-IsoTweakCursor {
     Log-Hud "Cursores Mathz eSports aplicados ao vivo!"
 }
 
-# Master Actions: Aplicar Todos e Restaurar Padrãoes
+# Master Actions: Aplicar Todos e Restaurar Padrãoes com Auditoria Real
 function Invoke-AllIsoTweaks {
     Log-Hud "Aplicando todas as 8 otimizacoes da ISO Mathz..."
-    try {
-        Invoke-IsoTweakMouse
-        Invoke-IsoTweakHags
-        Invoke-IsoTweakIfeo
-        Invoke-IsoTweakNagle
-        Invoke-IsoTweakBcd
-        Invoke-IsoTweakTelemetry
-        Invoke-IsoTweakExplorer
-        Invoke-IsoTweakCursor
-        Update-MathzTweaksChecklist
-        Log-Hud "TODAS as 8 otimizacoes da ISO foram aplicadas com sucesso!"
-    } catch {
-        Log-Hud "Erro ao aplicar suite completa: $_"
+    $failedList = [System.Collections.Generic.List[string]]::new()
+
+    try { Invoke-IsoTweakMouse } catch { $failedList.Add("Mouse 1:1") }
+    try { Invoke-IsoTweakHags } catch { $failedList.Add("HAGS GPU") }
+    try { Invoke-IsoTweakIfeo } catch { $failedList.Add("IFEO Kernel") }
+    try { Invoke-IsoTweakNagle } catch { $failedList.Add("TCP Nagle") }
+    try { Invoke-IsoTweakBcd } catch { $failedList.Add("BCDedit Timers") }
+    try { Invoke-IsoTweakTelemetry } catch { $failedList.Add("Telemetria") }
+    try { Invoke-IsoTweakExplorer } catch { $failedList.Add("Explorer Menus") }
+    try { Invoke-IsoTweakCursor } catch { $failedList.Add("Cursores Mathz") }
+
+    Update-MathzTweaksChecklist
+
+    # Validação rigorosa dos 8 itens
+    if (-not (Test-IsoTweakMouse))     { if (-not $failedList.Contains("Mouse 1:1"))     { $failedList.Add("Mouse 1:1") } }
+    if (-not (Test-IsoTweakHags))      { if (-not $failedList.Contains("HAGS GPU"))      { $failedList.Add("HAGS GPU") } }
+    if (-not (Test-IsoTweakIfeo))      { if (-not $failedList.Contains("IFEO Kernel"))  { $failedList.Add("IFEO Kernel") } }
+    if (-not (Test-IsoTweakNagle))     { if (-not $failedList.Contains("TCP Nagle"))     { $failedList.Add("TCP Nagle") } }
+    if (-not (Test-IsoTweakBcd))       { if (-not $failedList.Contains("BCDedit Timers")){ $failedList.Add("BCDedit Timers") } }
+    if (-not (Test-IsoTweakTelemetry)) { if (-not $failedList.Contains("Telemetria"))   { $failedList.Add("Telemetria") } }
+    if (-not (Test-IsoTweakExplorer))  { if (-not $failedList.Contains("Explorer Menus")){ $failedList.Add("Explorer Menus") } }
+    if (-not (Test-IsoTweakCursor))    { if (-not $failedList.Contains("Cursores Mathz")){ $failedList.Add("Cursores Mathz") } }
+
+    if ($failedList.Count -eq 0) {
+        Log-Hud "TODAS as 8 otimizacoes da ISO foram aplicadas e verificadas com sucesso!"
+        return $true
+    } else {
+        $failedNames = $failedList -join ", "
+        Log-Hud "AVISO: As seguintes otimizacoes nao puderam ser ativadas: $failedNames"
+        return $false
     }
 }
 
@@ -3998,16 +4222,17 @@ function Invoke-RestoreDefaultTweaks {
         Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Value 2 -Type DWord -Force -ErrorAction SilentlyContinue
 
         # 4. TCP Padrao (remover propriedades explicitas)
-        $nics = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\*" -ErrorAction SilentlyContinue
-        foreach ($nic in $nics) {
-            if ($nic.IPAddress -or $nic.DhcpIPAddress) {
-                Remove-ItemProperty -Path $nic.PSPath -Name "TcpAckFrequency" -Force -ErrorAction SilentlyContinue
-                Remove-ItemProperty -Path $nic.PSPath -Name "TCPNoDelay" -Force -ErrorAction SilentlyContinue
+        $interfacePath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces"
+        if (Test-Path $interfacePath) {
+            Get-ChildItem -Path $interfacePath -ErrorAction SilentlyContinue | ForEach-Object {
+                Remove-ItemProperty -Path $_.PSPath -Name "TcpAckFrequency" -Force -ErrorAction SilentlyContinue
+                Remove-ItemProperty -Path $_.PSPath -Name "TCPNoDelay" -Force -ErrorAction SilentlyContinue
+                Remove-ItemProperty -Path $_.PSPath -Name "TcpDelAckTicks" -Force -ErrorAction SilentlyContinue
             }
         }
 
         # 5. BCDedit Padrao
-        & bcdedit /deletevalue dynamicick 2>$null | Out-Null
+        & bcdedit /deletevalue disabledynamictick 2>$null | Out-Null
         & bcdedit /deletevalue tscsyncpolicy 2>$null | Out-Null
         & bcdedit /deletevalue useplatformclock 2>$null | Out-Null
 
@@ -4034,92 +4259,178 @@ function Invoke-RestoreDefaultTweaks {
     }
 }
 
-# Bindings dos Botoes da Suite ISO
-if ($btnAuditTweaks)          { $btnAuditTweaks.Add_Click({ Update-MathzTweaksChecklist; Log-Hud "Checklist do Windows auditado em tempo real!" }) }
-if ($btnApplyAllTweaks) {
-    $btnApplyAllTweaks.Add_Click({
-        Invoke-ModalAction "APLICANDO SUITE COMPLETA DA ISO" "Gravando as 8 diretrizes de latencia, IFEO, BCD, HAGS, TCP e telemetria no Windows..." "SUITE ISO APLICADA COM SUCESSO!" "Todas as 8 otimizacoes de desempenho para jogos e baixa latencia foram gravadas no sistema!" {
-            Invoke-AllIsoTweaks
-        }
+# Bindings dos Botoes da Suite ISO com Verificação Verdadeira e Aviso de Falha
+if ($btnAuditTweaks) {
+    $btnAuditTweaks.Add_Click({
+        $count = Update-MathzTweaksChecklist
+        Log-Hud "Auditoria em tempo real: $count/8 otimizações verificadas como ativas no Windows!"
     })
 }
+
+if ($btnApplyAllTweaks) {
+    $btnApplyAllTweaks.Add_Click({
+        Invoke-ModalAction "APLICANDO SUITE COMPLETA DA ISO" `
+                           "Gravando as 8 diretrizes de latencia, IFEO, BCD, HAGS, TCP e telemetria no Windows..." `
+                           "SUITE ISO APLICADA COM SUCESSO!" `
+                           "Todas as 8 otimizações de desempenho para jogos e baixa latência foram gravadas e verificadas no sistema!" `
+                           -action {
+                               Invoke-AllIsoTweaks
+                           } `
+                           -verifier {
+                               $count = Update-MathzTweaksChecklist
+                               return ($count -eq 8)
+                           } `
+                           -warnTitle "AVISO: NEM TODAS AS OTIMIZAÇÕES ATIVARAM" `
+                           -warnSub "Alguns recursos não puderam ser confirmados no sistema." `
+                           -warnDetails "Verifique se o painel foi executado como Administrador. O status real de cada tweak é exibido nos badges individuais."
+    })
+}
+
 if ($btnRestoreDefaultTweaks) {
     $btnRestoreDefaultTweaks.Add_Click({
-        Invoke-ModalAction "RESTAURANDO PADROES DO WINDOWS" "Revertendo registros, parametros BCD e servicos para a configuracao de fabrica..." "PADROES RESTAURADOS COM SUCESSO!" "Os parametros originais de fabrica do Windows foram restaurados com sucesso." {
-            Invoke-RestoreDefaultTweaks
-        }
+        Invoke-ModalAction "RESTAURANDO PADROES DO WINDOWS" `
+                           "Revertendo registros, parametros BCD e servicos para a configuracao de fabrica..." `
+                           "PADROES RESTAURADOS COM SUCESSO!" `
+                           "Os parametros originais de fabrica do Windows foram restaurados com sucesso." `
+                           -action {
+                               Invoke-RestoreDefaultTweaks
+                           }
     })
 }
 
 if ($btnOptimizeMouse) {
     $btnOptimizeMouse.Add_Click({
-        Invoke-ModalAction "OTIMIZANDO LATENCIA DO MOUSE" "Removendo aceleracao angular e ajustando fila USB para mira 1:1 consistente..." "MOUSE OTIMIZADO COM SUCESSO!" "Sensibilidade 1:1 e aceleracao zerada para mira instantanea nos jogos!" {
-            Invoke-IsoTweakMouse
-            Update-MathzTweaksChecklist
-        }
+        Invoke-ModalAction "OTIMIZANDO LATENCIA DO MOUSE" `
+                           "Removendo aceleracao angular e ajustando fila USB para mira 1:1 consistente..." `
+                           "MOUSE OTIMIZADO COM SUCESSO!" `
+                           "Sensibilidade 1:1 e aceleracao zerada para mira instantanea nos jogos!" `
+                           -action {
+                               Invoke-IsoTweakMouse
+                               Update-MathzTweaksChecklist
+                           } `
+                           -verifier { Test-IsoTweakMouse } `
+                           -warnTitle "AVISO: NÃO FOI POSSÍVEL ALTERAR O MOUSE" `
+                           -warnSub "A precisão 1:1 não pôde ser gravada no registro do usuário." `
+                           -warnDetails "Verifique se o registro HKCU:\Control Panel\Mouse está acessível para gravação."
     })
 }
 
 if ($btnOptimizeGpu) {
     $btnOptimizeGpu.Add_Click({
-        Invoke-ModalAction "ATIVANDO HAGS & AGENDAMENTO GPU" "Habilitando Hardware-Accelerated GPU Scheduling no registro de drivers..." "HAGS ATIVADO COM SUCESSO!" "GPU configurada para gerenciar a propria memoria e menor tempo de frame." {
-            Invoke-IsoTweakHags
-            Update-MathzTweaksChecklist
-        }
+        Invoke-ModalAction "ATIVANDO HAGS & AGENDAMENTO GPU" `
+                           "Habilitando Hardware-Accelerated GPU Scheduling no registro de drivers e Modo de Jogo..." `
+                           "HAGS ATIVADO COM SUCESSO!" `
+                           "GPU configurada para gerenciar a propria memoria e menor tempo de frame. (Reinicie o PC para carregamento do driver)." `
+                           -action {
+                               Invoke-IsoTweakHags
+                               Update-MathzTweaksChecklist
+                           } `
+                           -verifier { Test-IsoTweakHags } `
+                           -warnTitle "AVISO: HAGS NÃO PÔDE SER ATIVADO" `
+                           -warnSub "O registro HKLM do driver de vídeo não pôde ser alterado." `
+                           -warnDetails "O HAGS requer permissão de Administrador no registro HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers."
     })
 }
 
 if ($btnOptimizeIfeo) {
     $btnOptimizeIfeo.Add_Click({
-        Invoke-ModalAction "CONFIGURANDO PRIORIDADE IFEO" "Ajustando prioridade de thread do Windows e quantum Win32PrioritySeparation..." "PRIORIDADE IFEO APLICADA!" "Processos e emuladores agora recebem prioridade maxima de CPU e I/O." {
-            Invoke-IsoTweakIfeo
-            Update-MathzTweaksChecklist
-        }
+        Invoke-ModalAction "CONFIGURANDO PRIORIDADE IFEO" `
+                           "Ajustando prioridade de thread do Windows e quantum Win32PrioritySeparation..." `
+                           "PRIORIDADE IFEO APLICADA COM SUCESSO!" `
+                           "Processos e emuladores agora recebem prioridade maxima de CPU e I/O no Kernel." `
+                           -action {
+                               Invoke-IsoTweakIfeo
+                               Update-MathzTweaksChecklist
+                           } `
+                           -verifier { Test-IsoTweakIfeo } `
+                           -warnTitle "AVISO: PRIORIDADE NÃO PÔDE SER APLICADA" `
+                           -warnSub "O registro HKLM de PriorityControl não pôde ser gravado." `
+                           -warnDetails "O parâmetro Win32PrioritySeparation exige privilégios de Administrador."
     })
 }
 
 if ($btnOptimizeNagle) {
     $btnOptimizeNagle.Add_Click({
-        Invoke-ModalAction "DESATIVANDO ALGORITMO DE NAGLE" "Configurando TCPNoDelay=1 e TcpAckFrequency=1 nos adaptadores de rede..." "REDE OTIMIZADA COM SUCESSO!" "Buffer de pacotes desativado, reduzindo jitter e latencia em partidas online." {
-            Invoke-IsoTweakNagle
-            Update-MathzTweaksChecklist
-        }
+        Invoke-ModalAction "DESATIVANDO ALGORITMO DE NAGLE" `
+                           "Configurando TCPNoDelay=1 e TcpAckFrequency=1 nos adaptadores de rede..." `
+                           "REDE OTIMIZADA COM SUCESSO!" `
+                           "Buffer de pacotes desativado em todos os adaptadores, reduzindo jitter e latencia em partidas online." `
+                           -action {
+                               Invoke-IsoTweakNagle
+                               Update-MathzTweaksChecklist
+                           } `
+                           -verifier { Test-IsoTweakNagle } `
+                           -warnTitle "AVISO: NÃO FOI POSSÍVEL DESATIVAR O NAGLE" `
+                           -warnSub "As chaves de rede em Tcpip\Parameters não puderam ser gravadas." `
+                           -warnDetails "Verifique se o aplicativo foi executado como Administrador para alterar configurações de adaptadores."
     })
 }
 
 if ($btnOptimizeBcd) {
     $btnOptimizeBcd.Add_Click({
-        Invoke-ModalAction "SINCRONIZANDO TIMERS BCDEDIT" "Configurando sincronizacao de TSC de alta precisao e ticks estaticos..." "TIMERS BCDEDIT SINCRONIZADOS!" "Menor latencia de interrupcao DPC no Kernel do Windows configurada." {
-            Invoke-IsoTweakBcd
-            Update-MathzTweaksChecklist
-        }
+        Invoke-ModalAction "SINCRONIZANDO TIMERS BCDEDIT" `
+                           "Configurando sincronizacao de TSC de alta precisao e ticks estaticos..." `
+                           "TIMERS BCDEDIT SINCRONIZADOS COM SUCESSO!" `
+                           "Menor latencia de interrupcao DPC no Kernel do Windows configurada (DynamicTick OFF, TSC Sync Enhanced)." `
+                           -action {
+                               Invoke-IsoTweakBcd
+                               Update-MathzTweaksChecklist
+                           } `
+                           -verifier { Test-IsoTweakBcd } `
+                           -warnTitle "AVISO: BCDEDIT NÃO PÔDE SER ATUALIZADO" `
+                           -warnSub "O bcdedit.exe falhou ou os parâmetros não puderam ser gravados." `
+                           -warnDetails "O repositório BCD exige permissões de Administrador elevado para ser modificado."
     })
 }
 
 if ($btnDisableTelemetry) {
     $btnDisableTelemetry.Add_Click({
-        Invoke-ModalAction "DESATIVANDO TELEMETRIA & DIAGTRACK" "Interrompendo servicos de diagnostico e desativando coleta em segundo plano..." "TELEMETRIA DESATIVADA COM SUCESSO!" "Servicos em segundo plano encerrados para economia de CPU e RAM." {
-            Invoke-IsoTweakTelemetry
-            Update-MathzTweaksChecklist
-        }
+        Invoke-ModalAction "DESATIVANDO TELEMETRIA & DIAGTRACK" `
+                           "Interrompendo servicos de diagnostico e desativando coleta em segundo plano..." `
+                           "TELEMETRIA DESATIVADA COM SUCESSO!" `
+                           "Servicos em segundo plano encerrados para economia de CPU e RAM." `
+                           -action {
+                               Invoke-IsoTweakTelemetry
+                               Update-MathzTweaksChecklist
+                           } `
+                           -verifier { Test-IsoTweakTelemetry } `
+                           -warnTitle "AVISO: TELEMETRIA NÃO PÔDE SER BLOQUEADA" `
+                           -warnSub "Os serviços de telemetria não puderam ser desativados." `
+                           -warnDetails "Verifique se o serviço DiagTrack está bloqueado por políticas do sistema ou antivírus."
     })
 }
 
 if ($btnOptimizeExplorer) {
     $btnOptimizeExplorer.Add_Click({
-        Invoke-ModalAction "OTIMIZANDO EXPLORER DO WINDOWS" "Reduzindo MenuShowDelay para zero e acelerando fechamento de janelas..." "EXPLORER OTIMIZADO COM SUCESSO!" "Resposta instantanea nos menus de contexto e agilidade do Windows aumentada." {
-            Invoke-IsoTweakExplorer
-            Update-MathzTweaksChecklist
-        }
+        Invoke-ModalAction "OTIMIZANDO EXPLORER DO WINDOWS" `
+                           "Reduzindo MenuShowDelay para zero e acelerando fechamento de janelas..." `
+                           "EXPLORER OTIMIZADO COM SUCESSO!" `
+                           "Resposta instantanea nos menus de contexto e agilidade do Windows aumentada." `
+                           -action {
+                               Invoke-IsoTweakExplorer
+                               Update-MathzTweaksChecklist
+                           } `
+                           -verifier { Test-IsoTweakExplorer } `
+                           -warnTitle "AVISO: EXPLORER NÃO PÔDE SER OTIMIZADO" `
+                           -warnSub "O atraso de menus (MenuShowDelay) não pôde ser gravado no registro." `
+                           -warnDetails "Verifique o acesso ao registro HKCU:\Control Panel\Desktop."
     })
 }
 
 if ($btnApplyCursor) {
     $btnApplyCursor.Add_Click({
-        Invoke-ModalAction "APLICANDO CURSORES DA ISO" "Instalando esquema de cursores Mathz de alta visibilidade no registro..." "CURSORES APLICADOS COM SUCESSO!" "Esquema de cursores ativado e sincronizado em toda a sessao do usuario." {
-            Invoke-IsoTweakCursor
-            Update-MathzTweaksChecklist
-        }
+        Invoke-ModalAction "APLICANDO CURSORES DA ISO" `
+                           "Instalando esquema de cursores Mathz de alta visibilidade no registro..." `
+                           "CURSORES APLICADOS COM SUCESSO!" `
+                           "Esquema de cursores ativado e sincronizado em toda a sessao do usuario." `
+                           -action {
+                               Invoke-IsoTweakCursor
+                               Update-MathzTweaksChecklist
+                           } `
+                           -verifier { Test-IsoTweakCursor } `
+                           -warnTitle "AVISO: CURSORES NÃO PUDERAM SER APLICADOS" `
+                           -warnSub "Os arquivos de cursor não foram localizados ou a API de cursor falhou." `
+                           -warnDetails "Verifique se a pasta de cursores existe no diretório do aplicativo."
     })
 }
 
