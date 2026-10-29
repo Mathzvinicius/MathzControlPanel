@@ -1,5 +1,6 @@
 ﻿# ==============================================================================
-# MATHZ CONTROL PANEL - APLICADOR AUTONOMO DE CURSORES
+# MATHZ CONTROL PANEL - APLICADOR AUTÔNOMO DE CURSORES "MATHZ PERFORMANCE"
+# Design: Pure Black (#050508) com Contorno Neon Red (#FF003C)
 # ==============================================================================
 
 [CmdletBinding()]
@@ -100,8 +101,92 @@ if (-not ([System.Management.Automation.PSTypeName]'WinCursorAPI').Type) {
             } catch { }
         }
     }
-@
+'@
     Add-Type -TypeDefinition $csharp -ErrorAction SilentlyContinue
 }
 
-[WinCursorAPI]::ReloadLive("$curDir")
+$cursorSystemDir = "C:\Windows\Cursors\MathzPerformance"
+
+if ($RestoreDefault) {
+    $curRegPath = "HKCU:\Control Panel\Cursors"
+    if (-not (Test-Path $curRegPath)) { New-Item -Path $curRegPath -Force | Out-Null }
+    Set-ItemProperty -Path $curRegPath -Name "(Default)" -Value "Windows Default" -Force
+    $roles = @("Arrow","Help","AppStarting","Wait","Crosshair","IBeam","NWPen","No","SizeNS","SizeWE","SizeNWSE","SizeNESW","SizeAll","UpArrow","Hand","Pin","Person")
+    foreach ($r in $roles) {
+        Set-ItemProperty -Path $curRegPath -Name $r -Value "" -Force
+    }
+    [WinCursorAPI]::RestoreLive()
+    return
+}
+
+# Localizar pasta com os arquivos .cur
+$baseDir = if ($PSScriptRoot) { $PSScriptRoot } elseif ($global:PSScriptRoot) { $global:PSScriptRoot } else { (Get-Location).Path }
+$potentialDirs = @(
+    (Join-Path -Path $baseDir -ChildPath "Cursors"),
+    (Join-Path -Path $baseDir -ChildPath "MathzControlCenter\Cursors"),
+    (Join-Path -Path (Split-Path $baseDir -Parent) -ChildPath "MathzControlCenter\Cursors"),
+    (Join-Path -Path $env:LOCALAPPDATA -ChildPath "MathzControlPanel\MathzControlCenter\Cursors"),
+    (Join-Path -Path $env:LOCALAPPDATA -ChildPath "MathzControlPanel\Cursors"),
+    $cursorSystemDir
+)
+
+$sourceDir = $null
+foreach ($d in $potentialDirs) {
+    if (Test-Path (Join-Path $d "mathz_arrow.cur")) {
+        $sourceDir = $d
+        break
+    }
+}
+
+if (-not $sourceDir) {
+    return
+}
+
+# Tenta copiar para pasta do sistema C:\Windows\Cursors\MathzPerformance (se tiver permissão)
+$targetDir = $sourceDir
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if ($isAdmin) {
+    try {
+        if (-not (Test-Path $cursorSystemDir)) {
+            New-Item -ItemType Directory -Path $cursorSystemDir -Force | Out-Null
+        }
+        Get-ChildItem -Path $sourceDir -Filter "*.cur" | ForEach-Object {
+            Copy-Item -Path $_.FullName -Destination $cursorSystemDir -Force
+        }
+        $targetDir = $cursorSystemDir
+    } catch {
+        $targetDir = $sourceDir
+    }
+}
+
+# Grava esquema nos registros do Windows
+$curRegPath = "HKCU:\Control Panel\Cursors"
+if (-not (Test-Path $curRegPath)) { New-Item -Path $curRegPath -Force | Out-Null }
+Set-ItemProperty -Path $curRegPath -Name "(Default)" -Value "Mathz Performance" -Force
+
+$cursorMap = @{
+    "Arrow"       = "$targetDir\mathz_arrow.cur"
+    "Help"        = "$targetDir\mathz_help.cur"
+    "AppStarting" = "$targetDir\mathz_appstarting.cur"
+    "Wait"        = "$targetDir\mathz_wait.cur"
+    "Crosshair"   = "$targetDir\mathz_cross.cur"
+    "IBeam"       = "$targetDir\mathz_beam.cur"
+    "NWPen"       = "$targetDir\mathz_pen.cur"
+    "No"          = "$targetDir\mathz_no.cur"
+    "SizeNS"      = "$targetDir\mathz_ns.cur"
+    "SizeWE"      = "$targetDir\mathz_ew.cur"
+    "SizeNWSE"    = "$targetDir\mathz_nwse.cur"
+    "SizeNESW"    = "$targetDir\mathz_nesw.cur"
+    "SizeAll"     = "$targetDir\mathz_move.cur"
+    "UpArrow"     = "$targetDir\mathz_up.cur"
+    "Hand"        = "$targetDir\mathz_hand.cur"
+    "Pin"         = "$targetDir\mathz_pin.cur"
+    "Person"      = "$targetDir\mathz_person.cur"
+}
+
+foreach ($role in $cursorMap.Keys) {
+    Set-ItemProperty -Path $curRegPath -Name $role -Value $cursorMap[$role] -Force
+}
+
+# Recarrega cursores dinamicamente no Windows
+[WinCursorAPI]::ReloadLive($targetDir)

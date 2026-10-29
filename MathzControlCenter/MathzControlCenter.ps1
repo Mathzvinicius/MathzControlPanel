@@ -197,10 +197,11 @@ if (-not ([System.Management.Automation.PSTypeName]'WindowResizer').Type) {
 # ==============================================================================
 # 2. CARREGAMENTO EM MEMORIA DAS FONTES EMBUTIDAS (GDI FR_PRIVATE)
 # ==============================================================================
+$appDirRef = if ($PSScriptRoot) { $PSScriptRoot } elseif ($global:PSScriptRoot) { $global:PSScriptRoot } else { (Get-Location).Path }
 $fontCandidates = @(
-    (Join-Path -Path $PSScriptRoot -ChildPath "Assets\Fonts"),
-    (Join-Path -Path (Split-Path $PSScriptRoot -Parent) -ChildPath "MathzControlCenter\Assets\Fonts"),
-    (Join-Path -Path (Split-Path $PSScriptRoot -Parent) -ChildPath "Assets\Fonts"),
+    (Join-Path -Path $appDirRef -ChildPath "Assets\Fonts"),
+    (Join-Path -Path (Split-Path $appDirRef -Parent) -ChildPath "MathzControlCenter\Assets\Fonts"),
+    (Join-Path -Path (Split-Path $appDirRef -Parent) -ChildPath "Assets\Fonts"),
     (Join-Path -Path $env:LOCALAPPDATA -ChildPath "MathzControlPanel\MathzControlCenter\Assets\Fonts"),
     "C:\Program Files\MathzControlPanel\Assets\Fonts"
 )
@@ -2542,7 +2543,7 @@ function Start-MathzSelfUpdate {
     $disp = [System.Windows.Threading.DispatcherTimer]::new()
     $disp.Interval = [TimeSpan]::FromMilliseconds(600)
     $disp.Add_Tick({
-        $disp.Stop()
+        $this.Stop()
         try {
             $tempExe = Join-Path $env:TEMP "MathzControlPanel_New.exe"
             if (Test-Path $tempExe) { Remove-Item $tempExe -Force }
@@ -2707,47 +2708,49 @@ function Invoke-ModalAction {
         [string]$warnDetails = ""
     )
     Show-ModalOverlay $loadingTitle $loadingSub
+    [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
 
-    $timerWait = New-Object System.Windows.Threading.DispatcherTimer
-    $timerWait.Interval = [TimeSpan]::FromMilliseconds(950)
-    $timerWait.Add_Tick({
-        $timerWait.Stop()
-        $actionError = $null
+    # Pausa visual suave para exibição do spinner neon MTZ
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    while ($sw.ElapsedMilliseconds -lt 350) {
+        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
+        [System.Threading.Thread]::Sleep(25)
+    }
+
+    $actionError = $null
+    try {
+        if ($action) { & $action }
+    } catch {
+        $actionError = $_
+        Log-Hud "Erro na operacao: $_"
+    }
+
+    # Verificação Real e Confiável
+    $isVerified = $true
+    $failReason = ""
+
+    if ($actionError) {
+        $isVerified = $false
+        $failReason = "Erro na execução: $($actionError.Exception.Message)"
+    } elseif ($verifier) {
         try {
-            if ($action) { & $action }
-        } catch {
-            $actionError = $_
-            Log-Hud "Erro na operacao: $_"
-        }
-
-        # Verificação Real e Confiável
-        $isVerified = $true
-        $failReason = ""
-
-        if ($actionError) {
-            $isVerified = $false
-            $failReason = "Erro na execução: $($actionError.Exception.Message)"
-        } elseif ($verifier) {
-            try {
-                $verRes = & $verifier
-                $isVerified = [bool]$verRes
-                if (-not $isVerified) {
-                    $failReason = if ($warnDetails) { $warnDetails } else { "A verificação no Registro e Kernel indicou que os valores permanecem no padrão. Nenhuma alteração falsa foi registrada." }
-                }
-            } catch {
-                $isVerified = $false
-                $failReason = "Falha ao verificar status: $($_.Exception.Message)"
+            $verRes = & $verifier
+            $isVerified = [bool]$verRes
+            if (-not $isVerified) {
+                $failReason = if ($warnDetails) { $warnDetails } else { "A verificação no Registro e Kernel indicou que os valores permanecem no padrão. Nenhuma alteração falsa foi registrada." }
             }
+        } catch {
+            $isVerified = $false
+            $failReason = "Falha ao verificar status: $($_.Exception.Message)"
         }
+    }
 
-        if ($isVerified) {
-            Show-ModalSuccess $successTitle $successSub
-            Log-Hud $successTitle
-        } else {
-            Show-ModalWarning $warnTitle $warnSub $failReason
-        }
-    })
-    $timerWait.Start()
+    if ($isVerified) {
+        Show-ModalSuccess $successTitle $successSub
+        Log-Hud $successTitle
+    } else {
+        Show-ModalWarning $warnTitle $warnSub $failReason
+    }
 }
 
 $window.Add_KeyDown({
@@ -3956,7 +3959,7 @@ function Update-MathzTweaksChecklist {
             if ($txtStatusIfeo)   { $txtStatusIfeo.Text = $labelApplied; $txtStatusIfeo.Foreground = $brushGreenFg }
         } else {
             if ($badgeStatusIfeo) { $badgeStatusIfeo.Background = $brushRedBg; $badgeStatusIfeo.BorderBrush = $brushRedFg }
-            if ($txtStatusIfeo)   { $txtStatusIfeo.Text = "PADRAO (2)"; $txtStatusIfeo.Foreground = $brushRedFg }
+            if ($txtStatusIfeo)   { $txtStatusIfeo.Text = "PADRÃO (2)"; $txtStatusIfeo.Foreground = $brushRedFg }
         }
 
         # 4. TCP Nagle & Latencia de Rede
@@ -3978,7 +3981,7 @@ function Update-MathzTweaksChecklist {
             if ($txtStatusBcd)   { $txtStatusBcd.Text = $labelApplied; $txtStatusBcd.Foreground = $brushGreenFg }
         } else {
             if ($badgeStatusBcd) { $badgeStatusBcd.Background = $brushRedBg; $badgeStatusBcd.BorderBrush = $brushRedFg }
-            if ($txtStatusBcd)   { $txtStatusBcd.Text = "PADRAO"; $txtStatusBcd.Foreground = $brushRedFg }
+            if ($txtStatusBcd)   { $txtStatusBcd.Text = "PADRÃO"; $txtStatusBcd.Foreground = $brushRedFg }
         }
 
         # 6. Telemetria e Diagnosticos da Microsoft
@@ -4000,7 +4003,7 @@ function Update-MathzTweaksChecklist {
             if ($txtStatusExplorer)   { $txtStatusExplorer.Text = $labelApplied; $txtStatusExplorer.Foreground = $brushGreenFg }
         } else {
             if ($badgeStatusExplorer) { $badgeStatusExplorer.Background = $brushRedBg; $badgeStatusExplorer.BorderBrush = $brushRedFg }
-            if ($txtStatusExplorer)   { $txtStatusExplorer.Text = "PADRAO (400ms)"; $txtStatusExplorer.Foreground = $brushRedFg }
+            if ($txtStatusExplorer)   { $txtStatusExplorer.Text = "PADRÃO (400ms)"; $txtStatusExplorer.Foreground = $brushRedFg }
         }
 
         # 8. Cursors Mathz
@@ -4011,18 +4014,18 @@ function Update-MathzTweaksChecklist {
             if ($txtStatusCursor)   { $txtStatusCursor.Text = $labelApplied; $txtStatusCursor.Foreground = $brushGreenFg }
         } else {
             if ($badgeStatusCursor) { $badgeStatusCursor.Background = $brushRedBg; $badgeStatusCursor.BorderBrush = $brushRedFg }
-            if ($txtStatusCursor)   { $txtStatusCursor.Text = "PADRAO"; $txtStatusCursor.Foreground = $brushRedFg }
+            if ($txtStatusCursor)   { $txtStatusCursor.Text = "PADRÃO"; $txtStatusCursor.Foreground = $brushRedFg }
         }
 
         # Resumo do Checklist Geral (Topo da ViewTweaks)
         if ($txtTweaksSummary -and $badgeTweaksSummary) {
             if ($appliedCount -eq 8) {
-                $txtTweaksSummary.Text = "8/8 OTIMIZACOES ATIVAS (SISTEMA 100% ISO)"
+                $txtTweaksSummary.Text = "8/8 OTIMIZAÇÕES ATIVAS (SISTEMA 100% ISO)"
                 $badgeTweaksSummary.BorderBrush = $brushGreenFg
                 $badgeTweaksSummary.Background  = $brushGreenBg
                 $txtTweaksSummary.Foreground    = $brushGreenFg
             } else {
-                $txtTweaksSummary.Text = "$appliedCount/8 OTIMIZACOES ATIVAS"
+                $txtTweaksSummary.Text = "$appliedCount/8 OTIMIZAÇÕES ATIVAS"
                 $badgeTweaksSummary.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FFAA00")
                 $badgeTweaksSummary.Background  = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#181405")
                 $txtTweaksSummary.Foreground    = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FFAA00")
@@ -4151,16 +4154,17 @@ function Invoke-IsoTweakExplorer {
 }
 
 function Invoke-IsoTweakCursor {
+    $cDir = if ($PSScriptRoot) { $PSScriptRoot } elseif ($global:PSScriptRoot) { $global:PSScriptRoot } else { (Get-Location).Path }
     $candidates = @(
-        (Join-Path -Path $PSScriptRoot -ChildPath "Apply-Cursors.ps1"),
-        (Join-Path -Path (Split-Path $PSScriptRoot -Parent) -ChildPath "scripts\09_Apply_Mathz_Cursors.ps1"),
+        (Join-Path -Path $cDir -ChildPath "Apply-Cursors.ps1"),
+        (Join-Path -Path (Split-Path $cDir -Parent) -ChildPath "scripts\09_Apply_Mathz_Cursors.ps1"),
         "C:\Program Files\MathzControlPanel\Apply-Cursors.ps1"
     )
     $script = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
     if ($script) {
         & $script
     } else {
-        $cg = Join-Path $PSScriptRoot "CursorGenerator.ps1"
+        $cg = Join-Path $cDir "CursorGenerator.ps1"
         if (Test-Path $cg) {
             . $cg
             Apply-MathzCustomColors -InsideHex "#050508" -OutlineHex "#FF003C" | Out-Null
@@ -4288,10 +4292,10 @@ if ($btnApplyAllTweaks) {
 
 if ($btnRestoreDefaultTweaks) {
     $btnRestoreDefaultTweaks.Add_Click({
-        Invoke-ModalAction "RESTAURANDO PADROES DO WINDOWS" `
-                           "Revertendo registros, parametros BCD e servicos para a configuracao de fabrica..." `
-                           "PADROES RESTAURADOS COM SUCESSO!" `
-                           "Os parametros originais de fabrica do Windows foram restaurados com sucesso." `
+        Invoke-ModalAction "RESTAURANDO PADRÕES DO WINDOWS" `
+                           "Revertendo registros, parâmetros BCD e serviços para a configuração de fábrica..." `
+                           "PADRÕES RESTAURADOS COM SUCESSO!" `
+                           "Os parâmetros originais de fábrica do Windows foram restaurados com sucesso." `
                            -action {
                                Invoke-RestoreDefaultTweaks
                            }
@@ -4300,10 +4304,10 @@ if ($btnRestoreDefaultTweaks) {
 
 if ($btnOptimizeMouse) {
     $btnOptimizeMouse.Add_Click({
-        Invoke-ModalAction "OTIMIZANDO LATENCIA DO MOUSE" `
-                           "Removendo aceleracao angular e ajustando fila USB para mira 1:1 consistente..." `
+        Invoke-ModalAction "OTIMIZANDO LATÊNCIA DO MOUSE" `
+                           "Removendo aceleração angular e ajustando fila USB para mira 1:1 consistente..." `
                            "MOUSE OTIMIZADO COM SUCESSO!" `
-                           "Sensibilidade 1:1 e aceleracao zerada para mira instantanea nos jogos!" `
+                           "Sensibilidade 1:1 e aceleração zerada para mira instantânea nos jogos!" `
                            -action {
                                Invoke-IsoTweakMouse
                                Update-MathzTweaksChecklist
@@ -4320,7 +4324,7 @@ if ($btnOptimizeGpu) {
         Invoke-ModalAction "ATIVANDO HAGS & AGENDAMENTO GPU" `
                            "Habilitando Hardware-Accelerated GPU Scheduling no registro de drivers e Modo de Jogo..." `
                            "HAGS ATIVADO COM SUCESSO!" `
-                           "GPU configurada para gerenciar a propria memoria e menor tempo de frame. (Reinicie o PC para carregamento do driver)." `
+                           "GPU configurada para gerenciar a própria memória e menor tempo de frame. (Reinicie o PC para carregamento do driver)." `
                            -action {
                                Invoke-IsoTweakHags
                                Update-MathzTweaksChecklist
@@ -4337,7 +4341,7 @@ if ($btnOptimizeIfeo) {
         Invoke-ModalAction "CONFIGURANDO PRIORIDADE IFEO" `
                            "Ajustando prioridade de thread do Windows e quantum Win32PrioritySeparation..." `
                            "PRIORIDADE IFEO APLICADA COM SUCESSO!" `
-                           "Processos e emuladores agora recebem prioridade maxima de CPU e I/O no Kernel." `
+                           "Processos e emuladores agora recebem prioridade máxima de CPU e E/S no Kernel." `
                            -action {
                                Invoke-IsoTweakIfeo
                                Update-MathzTweaksChecklist
@@ -4354,7 +4358,7 @@ if ($btnOptimizeNagle) {
         Invoke-ModalAction "DESATIVANDO ALGORITMO DE NAGLE" `
                            "Configurando TCPNoDelay=1 e TcpAckFrequency=1 nos adaptadores de rede..." `
                            "REDE OTIMIZADA COM SUCESSO!" `
-                           "Buffer de pacotes desativado em todos os adaptadores, reduzindo jitter e latencia em partidas online." `
+                           "Buffer de pacotes desativado em todos os adaptadores, reduzindo jitter e latência em partidas online." `
                            -action {
                                Invoke-IsoTweakNagle
                                Update-MathzTweaksChecklist
@@ -4369,9 +4373,9 @@ if ($btnOptimizeNagle) {
 if ($btnOptimizeBcd) {
     $btnOptimizeBcd.Add_Click({
         Invoke-ModalAction "SINCRONIZANDO TIMERS BCDEDIT" `
-                           "Configurando sincronizacao de TSC de alta precisao e ticks estaticos..." `
+                           "Configurando sincronização de TSC de alta precisão e ticks estáticos..." `
                            "TIMERS BCDEDIT SINCRONIZADOS COM SUCESSO!" `
-                           "Menor latencia de interrupcao DPC no Kernel do Windows configurada (DynamicTick OFF, TSC Sync Enhanced)." `
+                           "Menor latência de interrupção DPC no Kernel do Windows configurada (DynamicTick OFF, TSC Sync Enhanced)." `
                            -action {
                                Invoke-IsoTweakBcd
                                Update-MathzTweaksChecklist
@@ -4386,9 +4390,9 @@ if ($btnOptimizeBcd) {
 if ($btnDisableTelemetry) {
     $btnDisableTelemetry.Add_Click({
         Invoke-ModalAction "DESATIVANDO TELEMETRIA & DIAGTRACK" `
-                           "Interrompendo servicos de diagnostico e desativando coleta em segundo plano..." `
+                           "Interrompendo serviços de diagnóstico e desativando coleta em segundo plano..." `
                            "TELEMETRIA DESATIVADA COM SUCESSO!" `
-                           "Servicos em segundo plano encerrados para economia de CPU e RAM." `
+                           "Serviços em segundo plano encerrados para economia de CPU e memória RAM." `
                            -action {
                                Invoke-IsoTweakTelemetry
                                Update-MathzTweaksChecklist
@@ -4405,7 +4409,7 @@ if ($btnOptimizeExplorer) {
         Invoke-ModalAction "OTIMIZANDO EXPLORER DO WINDOWS" `
                            "Reduzindo MenuShowDelay para zero e acelerando fechamento de janelas..." `
                            "EXPLORER OTIMIZADO COM SUCESSO!" `
-                           "Resposta instantanea nos menus de contexto e agilidade do Windows aumentada." `
+                           "Resposta instantânea nos menus de contexto e agilidade do Windows aumentada." `
                            -action {
                                Invoke-IsoTweakExplorer
                                Update-MathzTweaksChecklist
@@ -4422,7 +4426,7 @@ if ($btnApplyCursor) {
         Invoke-ModalAction "APLICANDO CURSORES DA ISO" `
                            "Instalando esquema de cursores Mathz de alta visibilidade no registro..." `
                            "CURSORES APLICADOS COM SUCESSO!" `
-                           "Esquema de cursores ativado e sincronizado em toda a sessao do usuario." `
+                           "Esquema de cursores ativado e sincronizado em toda a sessão do usuário." `
                            -action {
                                Invoke-IsoTweakCursor
                                Update-MathzTweaksChecklist
