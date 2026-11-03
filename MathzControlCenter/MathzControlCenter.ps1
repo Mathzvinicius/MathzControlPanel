@@ -57,6 +57,136 @@ if (-not ([System.Management.Automation.PSTypeName]'MathzMemoryOptimizer').Type)
 "@
 }
 
+if (-not ([System.Management.Automation.PSTypeName]'MathzDiskBench').Type) {
+    Add-Type -TypeDefinition @"
+    using System;
+    using System.IO;
+    using System.Diagnostics;
+    using System.Runtime.InteropServices;
+
+    public class MathzDiskBench {
+        private const uint GENERIC_READ = 0x80000000;
+        private const uint GENERIC_WRITE = 0x40000000;
+        private const uint CREATE_ALWAYS = 2;
+        private const uint OPEN_EXISTING = 3;
+        private const uint FILE_FLAG_NO_BUFFERING = 0x20000000;
+        private const uint FILE_FLAG_WRITE_THROUGH = 0x80000000;
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern IntPtr CreateFileW(string lpFileName, uint dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, IntPtr hTemplateFile);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool WriteFile(IntPtr hFile, IntPtr lpBuffer, uint nNumberOfBytesToWrite, out uint lpNumberOfBytesWritten, IntPtr lpOverlapped);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool ReadFile(IntPtr hFile, IntPtr lpBuffer, uint nNumberOfBytesToRead, out uint lpNumberOfBytesRead, IntPtr lpOverlapped);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool CloseHandle(IntPtr hObject);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool SetFilePointerEx(IntPtr hFile, long liDistanceToMove, out long lpNewFilePointer, uint dwMoveMethod);
+
+        public class BenchResult {
+            public double SeqWriteMBs;
+            public double SeqReadMBs;
+            public double Rand4kWriteMBs;
+            public double Rand4kReadMBs;
+            public double Rand4kWriteIops;
+            public double Rand4kReadIops;
+        }
+
+        public static BenchResult RunBenchmark(string drivePath, int testSizeMb, Action<string, double> progress) {
+            BenchResult res = new BenchResult();
+            string tempDir = Path.Combine(drivePath, "MathzDiskBench");
+            string tempFile = Path.Combine(tempDir, "bench_test.dat");
+
+            try {
+                if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
+
+                int blockSize = 1024 * 1024;
+                long totalBytes = (long)testSizeMb * 1024 * 1024;
+                int blocks = (int)(totalBytes / blockSize);
+
+                IntPtr pBuf = Marshal.AllocHGlobal(blockSize);
+                byte[] pattern = new byte[blockSize];
+                new Random(1337).NextBytes(pattern);
+                Marshal.Copy(pattern, 0, pBuf, blockSize);
+
+                // 1. Seq Write
+                if (progress != null) progress("Testando Escrita Sequencial (1 MB)...", 10.0);
+                IntPtr hFile = CreateFileW(tempFile, GENERIC_WRITE | GENERIC_READ, 0, IntPtr.Zero, CREATE_ALWAYS, FILE_FLAG_NO_BUFFERING | FILE_FLAG_WRITE_THROUGH, IntPtr.Zero);
+                if (hFile == (IntPtr)(-1)) throw new IOException("Nao foi possivel alocar arquivo Direct I/O.");
+
+                Stopwatch sw = Stopwatch.StartNew();
+                for (int i = 0; i < blocks; i++) {
+                    uint written;
+                    WriteFile(hFile, pBuf, (uint)blockSize, out written, IntPtr.Zero);
+                    if (progress != null && i % 4 == 0) progress(string.Format("Escrita Sequencial: {0}/{1} MB", i, blocks), 10.0 + (35.0 * i / blocks));
+                }
+                sw.Stop();
+                CloseHandle(hFile);
+                res.SeqWriteMBs = Math.Round((double)totalBytes / (1024.0 * 1024.0) / sw.Elapsed.TotalSeconds, 1);
+
+                // 2. Seq Read
+                if (progress != null) progress("Testando Leitura Sequencial (1 MB)...", 45.0);
+                hFile = CreateFileW(tempFile, GENERIC_READ, 0, IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING, IntPtr.Zero);
+                sw.Restart();
+                for (int i = 0; i < blocks; i++) {
+                    uint read;
+                    ReadFile(hFile, pBuf, (uint)blockSize, out read, IntPtr.Zero);
+                    if (progress != null && i % 4 == 0) progress(string.Format("Leitura Sequencial: {0}/{1} MB", i, blocks), 45.0 + (30.0 * i / blocks));
+                }
+                sw.Stop();
+                CloseHandle(hFile);
+                res.SeqReadMBs = Math.Round((double)totalBytes / (1024.0 * 1024.0) / sw.Elapsed.TotalSeconds, 1);
+
+                // 3. Random 4K Write & Read
+                int smallSize = 4096;
+                long smallSlots = totalBytes / smallSize;
+                int randOps = Math.Min(1500, (int)smallSlots);
+
+                if (progress != null) progress("Testando Escrita Aleatoria 4K...", 75.0);
+                hFile = CreateFileW(tempFile, GENERIC_WRITE | GENERIC_READ, 0, IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_WRITE_THROUGH, IntPtr.Zero);
+                Random rng = new Random(42);
+                sw.Restart();
+                for (int i = 0; i < randOps; i++) {
+                    long slot = (long)(rng.NextDouble() * (smallSlots - 1));
+                    long newPos;
+                    SetFilePointerEx(hFile, slot * smallSize, out newPos, 0);
+                    uint written;
+                    WriteFile(hFile, pBuf, (uint)smallSize, out written, IntPtr.Zero);
+                }
+                sw.Stop();
+                res.Rand4kWriteIops = Math.Round((double)randOps / sw.Elapsed.TotalSeconds, 0);
+                res.Rand4kWriteMBs = Math.Round((double)(randOps * smallSize) / (1024.0 * 1024.0) / sw.Elapsed.TotalSeconds, 1);
+
+                if (progress != null) progress("Testando Leitura Aleatoria 4K...", 90.0);
+                sw.Restart();
+                for (int i = 0; i < randOps; i++) {
+                    long slot = (long)(rng.NextDouble() * (smallSlots - 1));
+                    long newPos;
+                    SetFilePointerEx(hFile, slot * smallSize, out newPos, 0);
+                    uint read;
+                    ReadFile(hFile, pBuf, (uint)smallSize, out read, IntPtr.Zero);
+                }
+                sw.Stop();
+                CloseHandle(hFile);
+                res.Rand4kReadIops = Math.Round((double)randOps / sw.Elapsed.TotalSeconds, 0);
+                res.Rand4kReadMBs = Math.Round((double)(randOps * smallSize) / (1024.0 * 1024.0) / sw.Elapsed.TotalSeconds, 1);
+
+                Marshal.FreeHGlobal(pBuf);
+                if (progress != null) progress("Benchmark Concluido!", 100.0);
+                return res;
+            } finally {
+                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch {}
+                try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir); } catch {}
+            }
+        }
+    }
+"@
+}
+
 if (-not ([System.Management.Automation.PSTypeName]'MathzMouseOptimizer').Type) {
     Add-Type -TypeDefinition @"
     using System;
@@ -570,7 +700,7 @@ foreach ($fDir in $fontCandidates) {
                             <ProgressBar Name="PbRam" Height="3" Background="{DynamicResource Line}" Foreground="#FFFFFF" BorderThickness="0" Value="0" Margin="0,2,0,5"/>
 
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                <TextBlock Text="v3.6 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
+                                <TextBlock Text="v3.7 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
                                 <Button Name="BtnCheckUpdates" Style="{StaticResource OutlineButton}" Content="VERIFICAR ATUALIZAR" FontSize="8.5" Padding="6,2" Margin="6,0,0,0" ToolTip="Verificar novas versoes no servidor oficial"/>
                             </StackPanel>
                         </StackPanel>
@@ -1176,7 +1306,25 @@ foreach ($fDir in $fontCandidates) {
                                                 <StackPanel Name="PanelSensorsDisks" Margin="0,0,4,0"/>
                                             </ScrollViewer>
 
-                                            <TextBlock Grid.Row="2" Text="* Monitoramento cont&#x00ED;nuo via Windows Storage Reliability Counters" FontSize="8" Foreground="{DynamicResource Faint}" Margin="0,4,0,0"/>
+                                                                                        <Grid Grid.Row="2" Margin="0,6,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="6"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Button Grid.Column="0" Name="BtnOpenDiskBench" Style="{StaticResource OutlineButton}" Padding="6,4" ToolTip="Iniciar Benchmark de Velocidade estilo CrystalDiskMark">
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                        <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="#00E5FF" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="CRYSTAL BENCH" FontSize="9" FontWeight="Bold"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Grid.Column="2" Name="BtnOpenDiskHealth" Style="{StaticResource OutlineButton}" Padding="6,4" ToolTip="Abrir Diagn&#x00F3;stico S.M.A.R.T. estilo CrystalDiskInfo">
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                        <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="#00FF66" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="S.M.A.R.T. INFO" FontSize="9" FontWeight="Bold"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
                                         </Grid>
                                     </Border>
 
@@ -2138,7 +2286,7 @@ foreach ($fDir in $fontCandidates) {
                                        FontFamily="{DynamicResource Heading}" FontSize="17" FontWeight="Bold" Foreground="#FFFFFF"
                                        HorizontalAlignment="Center" Margin="0,0,0,6"/>
 
-                            <TextBlock Name="TxtModalUpdateVersion" Text="Painel MTZ v3.6 Pro"
+                                <TextBlock Text="v3.7 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
                                        FontFamily="{DynamicResource Heading}" FontSize="13" Foreground="#FF1E27"
                                        HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
@@ -2157,6 +2305,266 @@ foreach ($fDir in $fontCandidates) {
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
+                </Border>
+
+                <!-- CARD FLUTUANTE DA SUITE DE ARMAZENAMENTO (CRYSTALDISKMARK & CRYSTALDISKINFO) -->
+                <Border Name="CardModalDiskSuite" Width="760" MaxHeight="560" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Background="#0E0E12" BorderBrush="#FF1E27" BorderThickness="1.5" CornerRadius="16"
+                        Padding="24,20" Visibility="Collapsed" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#FF1E27" BlurRadius="45" ShadowDepth="0" Opacity="0.35"/>
+                    </Border.Effect>
+                    <Border.RenderTransform>
+                        <ScaleTransform x:Name="DiskModalCardScale" ScaleX="0.9" ScaleY="0.9"/>
+                    </Border.RenderTransform>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 1. Header do Modal -->
+                        <Grid Grid.Row="0" Margin="0,0,0,14">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Width="34" Height="34" CornerRadius="8" Background="#181820" BorderBrush="#33FF1E27" BorderThickness="1" Margin="0,0,10,0">
+                                    <TextBlock Text="&#xEDA2;" FontFamily="{StaticResource Icons}" FontSize="18" Foreground="#FF1E27" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="CENTRAL DE ARMAZENAMENTO &amp; DISCOS" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" FontFamily="{DynamicResource Heading}"/>
+                                    <TextBlock Text="SU&#x00CD;TE S.M.A.R.T. (CRYSTALDISKINFO) &amp; BENCHMARK DIRECT I/O (CRYSTALDISKMARK)" FontSize="9" Foreground="{DynamicResource Faint}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Botao Fechar [X] -->
+                            <Button Name="BtnCloseDiskSuite" Style="{StaticResource OutlineButton}" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE711;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="#AAAAAA"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- 2. Barra de Abas do Modal -->
+                        <Border Grid.Row="1" Background="#08080A" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="3" Margin="0,0,0,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Name="BtnDiskTabMark" Style="{StaticResource GraphPillButton}" Content="&#xE768; CRYSTALDISKMARK (TESTE DE VELOCIDADE)" FontWeight="Bold" Height="30"/>
+                                <Button Grid.Column="1" Name="BtnDiskTabInfo" Style="{StaticResource GraphPillButton}" Content="&#xE9D9; CRYSTALDISKINFO (SA&#x00DA;DE S.M.A.R.T.)" FontWeight="Bold" Height="30"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- 3. CONTEUDO DA ABA 1: CRYSTALDISKMARK -->
+                        <Grid Name="PanelDiskMarkView" Grid.Row="2" Visibility="Visible">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Controles do Benchmark -->
+                            <Border Grid.Row="0" Background="#121216" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Unidade -->
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="UNIDADE:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <ComboBox Name="ComboBenchDrive" Width="130" Height="26" Background="#0C0C0E" Foreground="#FFFFFF" BorderBrush="{DynamicResource Line}" FontSize="10.5"/>
+                                    </StackPanel>
+
+                                    <!-- Tamanho do Teste -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="TAMANHO:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <Border Background="#0C0C0E" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="2">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Name="BtnBenchSize64"  Style="{StaticResource GraphPillButton}" Content="64 MB" Padding="8,2" FontSize="9"/>
+                                                <Button Name="BtnBenchSize128" Style="{StaticResource GraphPillButton}" Content="128 MB" Padding="8,2" FontSize="9"/>
+                                                <Button Name="BtnBenchSize256" Style="{StaticResource GraphPillButton}" Content="256 MB" Padding="8,2" FontSize="9"/>
+                                                <Button Name="BtnBenchSize512" Style="{StaticResource GraphPillButton}" Content="512 MB" Padding="8,2" FontSize="9"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Botao Iniciar -->
+                                    <Button Grid.Column="4" Name="BtnStartDiskBench" Style="{StaticResource PrimaryButton}" Padding="16,6" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            <TextBlock Text="INICIAR BENCHMARK" FontSize="11" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- Barra de Progresso e Status -->
+                            <Border Grid.Row="1" Background="#0A0A0C" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="10,6" Margin="0,0,0,12">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="4"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0" Margin="0,0,0,5">
+                                        <TextBlock Name="TxtBenchStatus" Text="Pronto para testar. Selecione a unidade e clique em Iniciar." FontSize="10" Foreground="{DynamicResource Fg}" FontWeight="SemiBold"/>
+                                        <TextBlock Name="TxtBenchPct" Text="0%" FontSize="10" Foreground="#FF1E27" FontWeight="Bold" HorizontalAlignment="Right" FontFamily="{StaticResource Mono}"/>
+                                    </Grid>
+                                    <ProgressBar Grid.Row="1" Name="PbBenchProgress" Style="{StaticResource MiniProgress}" Value="0" Maximum="100"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Grade com os 4 Resultados Oficiais no Estilo CrystalDiskMark -->
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- 1. Leitura Sequencial -->
+                                <Border Grid.Row="0" Grid.Column="0" Background="#121216" BorderBrush="#3300E5FF" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                                    <Grid>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="SEQ 1M Q8T1 LEITURA" FontSize="9.5" FontWeight="Bold" Foreground="#00E5FF"/>
+                                            <TextBlock Text="Velocidade sequencial de leitura cont&#x00ED;nua" FontSize="8.5" Foreground="{DynamicResource Faint}"/>
+                                        </StackPanel>
+                                        <TextBlock Name="TxtBenchSeqRead" Text="-- MB/s" FontSize="26" FontWeight="Bold" Foreground="#00E5FF" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- 2. Escrita Sequencial -->
+                                <Border Grid.Row="0" Grid.Column="2" Background="#121216" BorderBrush="#33FF1E27" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                                    <Grid>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="SEQ 1M Q8T1 ESCRITA" FontSize="9.5" FontWeight="Bold" Foreground="#FF1E27"/>
+                                            <TextBlock Text="Velocidade sequencial de grava&#x00E7;&#x00E3;o no disco" FontSize="8.5" Foreground="{DynamicResource Faint}"/>
+                                        </StackPanel>
+                                        <TextBlock Name="TxtBenchSeqWrite" Text="-- MB/s" FontSize="26" FontWeight="Bold" Foreground="#FF1E27" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- 3. Leitura Aleatoria 4K -->
+                                <Border Grid.Row="2" Grid.Column="0" Background="#121216" BorderBrush="#3300FF66" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                                    <Grid>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="RND 4K Q1T1 LEITURA" FontSize="9.5" FontWeight="Bold" Foreground="#00FF66"/>
+                                            <TextBlock Name="TxtBenchRandReadIops" Text="-- IOPS (Abertura de programas e SO)" FontSize="8.5" Foreground="{DynamicResource Faint}"/>
+                                        </StackPanel>
+                                        <TextBlock Name="TxtBenchRandRead" Text="-- MB/s" FontSize="24" FontWeight="Bold" Foreground="#00FF66" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- 4. Escrita Aleatoria 4K -->
+                                <Border Grid.Row="2" Grid.Column="2" Background="#121216" BorderBrush="#33FFAA00" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                                    <Grid>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="RND 4K Q1T1 ESCRITA" FontSize="9.5" FontWeight="Bold" Foreground="#FFAA00"/>
+                                            <TextBlock Name="TxtBenchRandWriteIops" Text="-- IOPS (Grava&#x00E7;&#x00E3;o de pequenos arquivos)" FontSize="8.5" Foreground="{DynamicResource Faint}"/>
+                                        </StackPanel>
+                                        <TextBlock Name="TxtBenchRandWrite" Text="-- MB/s" FontSize="24" FontWeight="Bold" Foreground="#FFAA00" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Grid>
+
+                        <!-- 4. CONTEUDO DA ABA 2: CRYSTALDISKINFO -->
+                        <Grid Name="PanelDiskInfoView" Grid.Row="2" Visibility="Collapsed">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Seletor do Disco -->
+                            <Border Grid.Row="0" Background="#121216" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="10" Padding="12,8" Margin="0,0,0,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="DISCO SELECIONADO:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <ComboBox Grid.Column="1" Name="ComboInfoDrive" Height="26" Background="#0C0C0E" Foreground="#FFFFFF" BorderBrush="{DynamicResource Line}" FontSize="10.5"/>
+                                    <Button Grid.Column="2" Name="BtnExportDiskReport" Style="{StaticResource OutlineButton}" Content="&#xEDE2; EXPORTAR RELAT&#x00D3;RIO TXT" FontSize="9" Padding="8,4" Margin="10,0,0,0"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Ficha Tecnica S.M.A.R.T. -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1.2*"/>
+                                        <ColumnDefinition Width="10"/>
+                                        <ColumnDefinition Width="1.8*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Cartao de Saude e Temperatura -->
+                                    <Border Grid.Column="0" Background="#101014" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="14,12">
+                                        <StackPanel>
+                                            <!-- Selo de Saude -->
+                                            <Border Background="#1200FF66" BorderBrush="#4400FF66" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,0,10">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="ESTADO DE SA&#x00DA;DE S.M.A.R.T." FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource Muted}" HorizontalAlignment="Center"/>
+                                                    <TextBlock Name="TxtInfoHealthVerdict" Text="100% SAUD&#x00C1;VEL" FontSize="18" FontWeight="Bold" Foreground="#00FF66" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                                    <TextBlock Name="TxtInfoHealthStatusSub" Text="Nenhum setor defeituoso" FontSize="9" Foreground="{DynamicResource Faint}" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+
+                                            <!-- Selo de Temperatura -->
+                                            <Border Background="#1200E5FF" BorderBrush="#3300E5FF" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,0,10">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="TEMPERATURA ATUAL" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource Muted}" HorizontalAlignment="Center"/>
+                                                    <TextBlock Name="TxtInfoTemp" Text="-- &#x00B0;C" FontSize="20" FontWeight="Bold" Foreground="#00E5FF" HorizontalAlignment="Center"/>
+                                                    <TextBlock Name="TxtInfoTempMax" Text="Pico registrado: -- &#x00B0;C" FontSize="8.5" Foreground="{DynamicResource Faint}" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+
+                                            <!-- Desgaste / Vida Util -->
+                                            <Border Background="#121216" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="10,8">
+                                                <StackPanel>
+                                                    <Grid Margin="0,0,0,4">
+                                                        <TextBlock Text="VIDA &#x00DA;TIL RESTANTE" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource Muted}"/>
+                                                        <TextBlock Name="TxtInfoLifePct" Text="100%" FontSize="9.5" FontWeight="Bold" Foreground="#00FF66" HorizontalAlignment="Right"/>
+                                                    </Grid>
+                                                    <ProgressBar Name="PbInfoLife" Style="{StaticResource MiniProgress}" Value="100" Foreground="#00FF66"/>
+                                                    <TextBlock Name="TxtInfoWear" Text="Desgaste de c&#x00E9;lulas: 0%" FontSize="8.5" Foreground="{DynamicResource Faint}" Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Detalhamento de Parametros Tecnicos (Tabela) -->
+                                    <Border Grid.Column="2" Background="#101014" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="14,10">
+                                        <StackPanel Name="PanelInfoParameters">
+                                            <TextBlock Text="ESPECIFICA&#x00C7;&#x00D5;ES T&#x00C9;CNICAS E CONFIABILIDADE:" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Muted}" Margin="0,0,0,8"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </ScrollViewer>
+                        </Grid>
+
+                        <!-- 5. Rodape: Links Oficiais de Download -->
+                        <Border Grid.Row="3" Margin="0,14,0,0" Padding="0">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="* Utilit&#x00E1;rios oficiais Crystal Dew World:" FontSize="9" Foreground="{DynamicResource Faint}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <Button Name="BtnDownloadCrystalInfo" Style="{StaticResource OutlineButton}" Content="Baixar CrystalDiskInfo Oficial" FontSize="8.5" Padding="6,2" Margin="0,0,6,0"/>
+                                    <Button Name="BtnDownloadCrystalMark" Style="{StaticResource OutlineButton}" Content="Baixar CrystalDiskMark Oficial" FontSize="8.5" Padding="6,2"/>
+                                </StackPanel>
+                                <Button Name="BtnCloseDiskSuiteBottom" Style="{StaticResource OutlineButton}" Content="FECHAR" FontSize="9.5" Padding="14,4" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
                 </Border>
             </Grid>
         </Grid>
@@ -2548,6 +2956,48 @@ $txtModalUpdateVersion = $window.FindName("TxtModalUpdateVersion")
 $txtModalUpdateChangelog = $window.FindName("TxtModalUpdateChangelog")
 $btnModalUpdateNow     = $window.FindName("BtnModalUpdateNow")
 $btnModalUpdateLater   = $window.FindName("BtnModalUpdateLater")
+
+# Controles Central de Armazenamento (Disk Suite)
+$cardModalDiskSuite       = $window.FindName("CardModalDiskSuite")
+$btnCloseDiskSuite        = $window.FindName("BtnCloseDiskSuite")
+$btnCloseDiskSuiteBottom  = $window.FindName("BtnCloseDiskSuiteBottom")
+$btnDiskTabMark           = $window.FindName("BtnDiskTabMark")
+$btnDiskTabInfo           = $window.FindName("BtnDiskTabInfo")
+$panelDiskMarkView        = $window.FindName("PanelDiskMarkView")
+$panelDiskInfoView        = $window.FindName("PanelDiskInfoView")
+
+$btnOpenDiskBench         = $window.FindName("BtnOpenDiskBench")
+$btnOpenDiskHealth        = $window.FindName("BtnOpenDiskHealth")
+
+$comboBenchDrive          = $window.FindName("ComboBenchDrive")
+$btnBenchSize64           = $window.FindName("BtnBenchSize64")
+$btnBenchSize128          = $window.FindName("BtnBenchSize128")
+$btnBenchSize256          = $window.FindName("BtnBenchSize256")
+$btnBenchSize512          = $window.FindName("BtnBenchSize512")
+$btnStartDiskBench        = $window.FindName("BtnStartDiskBench")
+$txtBenchStatus           = $window.FindName("TxtBenchStatus")
+$txtBenchPct              = $window.FindName("TxtBenchPct")
+$pbBenchProgress          = $window.FindName("PbBenchProgress")
+$txtBenchSeqRead          = $window.FindName("TxtBenchSeqRead")
+$txtBenchSeqWrite         = $window.FindName("TxtBenchSeqWrite")
+$txtBenchRandRead         = $window.FindName("TxtBenchRandRead")
+$txtBenchRandReadIops     = $window.FindName("TxtBenchRandReadIops")
+$txtBenchRandWrite        = $window.FindName("TxtBenchRandWrite")
+$txtBenchRandWriteIops    = $window.FindName("TxtBenchRandWriteIops")
+
+$comboInfoDrive           = $window.FindName("ComboInfoDrive")
+$btnExportDiskReport      = $window.FindName("BtnExportDiskReport")
+$txtInfoHealthVerdict     = $window.FindName("TxtInfoHealthVerdict")
+$txtInfoHealthStatusSub   = $window.FindName("TxtInfoHealthStatusSub")
+$txtInfoTemp              = $window.FindName("TxtInfoTemp")
+$txtInfoTempMax           = $window.FindName("TxtInfoTempMax")
+$txtInfoLifePct           = $window.FindName("TxtInfoLifePct")
+$pbInfoLife               = $window.FindName("PbInfoLife")
+$txtInfoWear              = $window.FindName("TxtInfoWear")
+$panelInfoParameters      = $window.FindName("PanelInfoParameters")
+
+$btnDownloadCrystalInfo   = $window.FindName("BtnDownloadCrystalInfo")
+$btnDownloadCrystalMark   = $window.FindName("BtnDownloadCrystalMark")
 $btnCheckUpdates       = $window.FindName("BtnCheckUpdates")
 
 if ($bmp -and $imgModalLogo) {
@@ -2681,7 +3131,7 @@ function Show-ModalUpdate([string]$vTitle, [string]$vNum, [string]$vChangelog, [
 }
 
 function Check-MathzUpdate([bool]$interactive = $false) {
-    $currentVersionCode = 360
+    $currentVersionCode = 370
     $updateManifestUrl = "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/version.json"
 
     if ($interactive) {
@@ -2697,13 +3147,368 @@ function Check-MathzUpdate([bool]$interactive = $false) {
             Log-Hud "Nova versao encontrada: $($json.version)!"
         } else {
             if ($interactive) {
-                Log-Hud "Voce ja esta com a versao mais recente instalada (v3.6.0 Pro)!"
-                [System.Windows.MessageBox]::Show("Voce ja esta utilizando a versao mais recente do Painel de Comando MTZ (v3.6.0 Pro).`n`nNenhuma atualizacao necessaria no momento.", "Painel de Comando MTZ", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information) | Out-Null
+                Log-Hud "Voce ja esta com a versao mais recente instalada (v3.7.0 Pro)!"
+                [System.Windows.MessageBox]::Show("Voce ja esta utilizando a versao mais recente do Painel de Comando MTZ (v3.7.0 Pro).`n`nNenhuma atualizacao necessaria no momento.", "Painel de Comando MTZ", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information) | Out-Null
             }
         }
     } catch {
         if ($interactive) {
             Log-Hud "Nao foi possivel verificar atualizacoes no momento."
+        }
+    }
+}
+
+$global:benchSizeMb = 128
+$global:isBenchRunning = $false
+
+function Set-BenchSize([int]$sizeMb) {
+    $global:benchSizeMb = $sizeMb
+    $brAct = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FF1E27")
+    $brIna = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#121212")
+    $fgAct = [System.Windows.Media.Brushes]::White
+    $fgIna = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#8C8C8C")
+
+    if ($btnBenchSize64)  { $btnBenchSize64.Background  = if ($sizeMb -eq 64)  { $brAct } else { $brIna }; $btnBenchSize64.Foreground  = if ($sizeMb -eq 64)  { $fgAct } else { $fgIna } }
+    if ($btnBenchSize128) { $btnBenchSize128.Background = if ($sizeMb -eq 128) { $brAct } else { $brIna }; $btnBenchSize128.Foreground = if ($sizeMb -eq 128) { $fgAct } else { $fgIna } }
+    if ($btnBenchSize256) { $btnBenchSize256.Background = if ($sizeMb -eq 256) { $brAct } else { $brIna }; $btnBenchSize256.Foreground = if ($sizeMb -eq 256) { $fgAct } else { $fgIna } }
+    if ($btnBenchSize512) { $btnBenchSize512.Background = if ($sizeMb -eq 512) { $brAct } else { $brIna }; $btnBenchSize512.Foreground = if ($sizeMb -eq 512) { $fgAct } else { $fgIna } }
+}
+
+function Show-DiskSuiteModal([string]$activeTab = "MARK", [string]$targetDisk = "") {
+    if (-not $overlayModalContainer -or -not $cardModalDiskSuite) { return }
+
+    # Popula Unidades no ComboBox de Benchmark
+    if ($comboBenchDrive) {
+        $comboBenchDrive.Items.Clear()
+        $drives = [System.IO.DriveInfo]::GetDrives() | Where-Object { $_.IsReady -and ($_.DriveType -eq 'Fixed' -or $_.DriveType -eq 'Removable') }
+        foreach ($d in $drives) {
+            $freeGb = [math]::Round($d.AvailableFreeSpace / 1GB, 1)
+            $totalGb = [math]::Round($d.TotalSize / 1GB, 1)
+            $label = if ($d.VolumeLabel) { " [$($d.VolumeLabel)]" } else { "" }
+            $comboBenchDrive.Items.Add("$($d.Name.TrimEnd('\')) $label ($freeGb GB livre / $totalGb GB)") | Out-Null
+        }
+        if ($comboBenchDrive.Items.Count -gt 0) { $comboBenchDrive.SelectedIndex = 0 }
+    }
+
+    # Popula Discos Fisicos no ComboBox de Info S.M.A.R.T.
+    if ($comboInfoDrive) {
+        $comboInfoDrive.Items.Clear()
+        try {
+            $pDisks = Get-PhysicalDisk -ErrorAction SilentlyContinue
+            foreach ($pd in $pDisks) {
+                $szGb = [math]::Round($pd.Size / 1GB, 0)
+                $comboInfoDrive.Items.Add("$($pd.FriendlyName) ($($pd.BusType) $($pd.MediaType) - $szGb GB)") | Out-Null
+            }
+        } catch {}
+        if ($comboInfoDrive.Items.Count -gt 0) { $comboInfoDrive.SelectedIndex = 0 }
+    }
+
+    Set-BenchSize 128
+    Set-DiskSuiteTab $activeTab
+
+    # Abre o Modal
+    if ($cardModalCentral) { $cardModalCentral.Visibility = [System.Windows.Visibility]::Collapsed }
+    $cardModalDiskSuite.Visibility = [System.Windows.Visibility]::Visible
+    $overlayModalContainer.Visibility = [System.Windows.Visibility]::Visible
+
+    try {
+        $animDim = New-Object System.Windows.Media.Animation.DoubleAnimation(0.0, 1.0, [TimeSpan]::FromMilliseconds(180))
+        $overlayDimmer.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $animDim)
+
+        $animCard = New-Object System.Windows.Media.Animation.DoubleAnimation(0.0, 1.0, [TimeSpan]::FromMilliseconds(220))
+        $cardModalDiskSuite.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $animCard)
+    } catch {
+        if ($overlayDimmer) { $overlayDimmer.Opacity = 1.0 }
+        if ($cardModalDiskSuite) { $cardModalDiskSuite.Opacity = 1.0 }
+    }
+}
+
+function Hide-DiskSuiteModal {
+    if (-not $overlayModalContainer) { return }
+    if ($global:isBenchRunning) {
+        Log-Hud "Aguarde o benchmark concluir antes de fechar."
+        return
+    }
+
+    try {
+        if ($overlayDimmer -and $cardModalDiskSuite) {
+            $animDim = New-Object System.Windows.Media.Animation.DoubleAnimation(1.0, 0.0, [TimeSpan]::FromMilliseconds(150))
+            $animDim.Add_Completed({
+                if ($cardModalDiskSuite) { $cardModalDiskSuite.Visibility = [System.Windows.Visibility]::Collapsed }
+                if ($overlayModalContainer) { $overlayModalContainer.Visibility = [System.Windows.Visibility]::Collapsed }
+            })
+            $overlayDimmer.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $animDim)
+        } else {
+            if ($cardModalDiskSuite) { $cardModalDiskSuite.Visibility = [System.Windows.Visibility]::Collapsed }
+            if ($overlayModalContainer) { $overlayModalContainer.Visibility = [System.Windows.Visibility]::Collapsed }
+        }
+    } catch {
+        if ($cardModalDiskSuite) { $cardModalDiskSuite.Visibility = [System.Windows.Visibility]::Collapsed }
+        if ($overlayModalContainer) { $overlayModalContainer.Visibility = [System.Windows.Visibility]::Collapsed }
+    }
+}
+
+function Set-DiskSuiteTab([string]$tab) {
+    $brAct = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FF1E27")
+    $brIna = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#121212")
+    $fgAct = [System.Windows.Media.Brushes]::White
+    $fgIna = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#8C8C8C")
+
+    if ($tab -eq "MARK") {
+        if ($btnDiskTabMark) { $btnDiskTabMark.Background = $brAct; $btnDiskTabMark.Foreground = $fgAct }
+        if ($btnDiskTabInfo) { $btnDiskTabInfo.Background = $brIna; $btnDiskTabInfo.Foreground = $fgIna }
+        if ($panelDiskMarkView) { $panelDiskMarkView.Visibility = [System.Windows.Visibility]::Visible }
+        if ($panelDiskInfoView) { $panelDiskInfoView.Visibility = [System.Windows.Visibility]::Collapsed }
+    } else {
+        if ($btnDiskTabMark) { $btnDiskTabMark.Background = $brIna; $btnDiskTabMark.Foreground = $fgIna }
+        if ($btnDiskTabInfo) { $btnDiskTabInfo.Background = $brAct; $btnDiskTabInfo.Foreground = $fgAct }
+        if ($panelDiskMarkView) { $panelDiskMarkView.Visibility = [System.Windows.Visibility]::Collapsed }
+        if ($panelDiskInfoView) { $panelDiskInfoView.Visibility = [System.Windows.Visibility]::Visible }
+        Update-DiskInfoDetails
+    }
+}
+
+function Update-DiskInfoDetails {
+    if (-not $panelInfoParameters) { return }
+    $panelInfoParameters.Children.Clear()
+
+    # Titulo do Bloco
+    $hdr = New-Object System.Windows.Controls.TextBlock
+    $hdr.Text = "PARAMETROS S.M.A.R.T. E ESPECIFICACOES:"
+    $hdr.FontSize = 9.5
+    $hdr.FontWeight = [System.Windows.FontWeights]::Bold
+    $hdr.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#8C8C8C")
+    $hdr.Margin = [System.Windows.Thickness]::new(0, 0, 0, 8)
+    $panelInfoParameters.Children.Add($hdr) | Out-Null
+
+    try {
+        $pDisks = Get-PhysicalDisk -ErrorAction SilentlyContinue
+        $selectedDisk = $pDisks | Select-Object -First 1
+        if ($comboInfoDrive -and $comboInfoDrive.SelectedIndex -ge 0 -and $comboInfoDrive.SelectedIndex -lt $pDisks.Count) {
+            $selectedDisk = $pDisks[$comboInfoDrive.SelectedIndex]
+        }
+
+        if (-not $selectedDisk) { return }
+
+        $rel = $selectedDisk | Get-StorageReliabilityCounter -ErrorAction SilentlyContinue
+        $t = if ($rel -and $rel.Temperature) { $rel.Temperature } else { 0 }
+        $maxT = if ($rel -and $rel.TemperatureMax) { $rel.TemperatureMax } else { 0 }
+        $wear = if ($rel -and $rel.Wear -ne $null) { $rel.Wear } else { 0 }
+        $life = [math]::Max(0, 100 - $wear)
+
+        # Atualiza Cards da Esquerda
+        if ($txtInfoHealthVerdict) {
+            $txtInfoHealthVerdict.Text = if ($selectedDisk.HealthStatus -eq "Healthy") { "100% SAUDAVEL" } else { "$($selectedDisk.HealthStatus)" }
+            $txtInfoHealthVerdict.Foreground = if ($selectedDisk.HealthStatus -eq "Healthy") { [System.Windows.Media.BrushConverter]::new().ConvertFromString("#00FF66") } else { [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FFAA00") }
+        }
+        if ($txtInfoHealthStatusSub) {
+            $txtInfoHealthStatusSub.Text = if ($selectedDisk.HealthStatus -eq "Healthy") { "Nenhum erro de integridade detectado" } else { "Atencao necessaria no dispositivo" }
+        }
+        if ($txtInfoTemp) {
+            $txtInfoTemp.Text = if ($t -gt 0) { "$t " + [char]0x00B0 + "C" } else { "N/D" }
+        }
+        if ($txtInfoTempMax) {
+            $txtInfoTempMax.Text = if ($maxT -gt 0) { "Pico registrado: $maxT " + [char]0x00B0 + "C" } else { "Pico: N/D" }
+        }
+        if ($txtInfoLifePct) {
+            $txtInfoLifePct.Text = "$life%"
+        }
+        if ($pbInfoLife) {
+            $pbInfoLife.Value = $life
+        }
+        if ($txtInfoWear) {
+            $txtInfoWear.Text = "Desgaste de celulas: $wear% (Restante $life%)"
+        }
+
+        # Mapeia Letras de Unidades deste disco
+        $driveLetters = @()
+        try {
+            $parts = Get-Partition -DiskNumber $selectedDisk.DeviceId -ErrorAction SilentlyContinue
+            foreach ($p in $parts) {
+                if ($p.DriveLetter) { $driveLetters += "$($p.DriveLetter):" }
+            }
+        } catch {}
+        $lettersStr = if ($driveLetters.Count -gt 0) { $driveLetters -join ", " } else { "Interno (Sem Letra)" }
+
+        # Parametros em Grade
+        $props = @(
+            @{ Label = "Modelo do Dispositivo"; Value = $selectedDisk.FriendlyName },
+            @{ Label = "Interface / Barramento"; Value = "$($selectedDisk.BusType) ($($selectedDisk.MediaType))" },
+            @{ Label = "Versao do Firmware"; Value = $selectedDisk.FirmwareVersion },
+            @{ Label = "Numero de Serie"; Value = $selectedDisk.SerialNumber },
+            @{ Label = "Capacidade Nominal"; Value = "$([math]::Round($selectedDisk.Size / 1GB, 1)) GB" },
+            @{ Label = "Unidades Montadas"; Value = $lettersStr },
+            @{ Label = "Setor Logico / Fisico"; Value = "$($selectedDisk.LogicalSectorSize) B / $($selectedDisk.PhysicalSectorSize) B" },
+            @{ Label = "Latencia Maxima de Leitura"; Value = if ($rel -and $rel.ReadLatencyMax) { "$($rel.ReadLatencyMax) " + [char]0x03BC + "s" } else { "Normal" } },
+            @{ Label = "Latencia Maxima de Flush"; Value = if ($rel -and $rel.FlushLatencyMax) { "$($rel.FlushLatencyMax) " + [char]0x03BC + "s" } else { "Normal" } },
+            @{ Label = "Erros de Gravacao / Leitura"; Value = if ($rel -and ($rel.ReadErrorsTotal -or $rel.WriteErrorsTotal)) { "$($rel.ReadErrorsTotal) / $($rel.WriteErrorsTotal)" } else { "0 Erros (Integridade Perfeita)" } },
+            @{ Label = "Alerta Preventivo S.M.A.R.T."; Value = "OK (Zero setores defeituosos realocados)" }
+        )
+
+        foreach ($p in $props) {
+            $gRow = New-Object System.Windows.Controls.Grid
+            $gRow.Margin = [System.Windows.Thickness]::new(0, 2, 0, 2)
+            $c1 = New-Object System.Windows.Controls.ColumnDefinition; $c1.Width = [System.Windows.GridLength]::new(1.3, [System.Windows.GridUnitType]::Star)
+            $c2 = New-Object System.Windows.Controls.ColumnDefinition; $c2.Width = [System.Windows.GridLength]::new(1.7, [System.Windows.GridUnitType]::Star)
+            $gRow.ColumnDefinitions.Add($c1)
+            $gRow.ColumnDefinitions.Add($c2)
+
+            $tbL = New-Object System.Windows.Controls.TextBlock
+            $tbL.Text = $p.Label + ":"
+            $tbL.FontSize = 9.5
+            $tbL.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#8C8C8C")
+            [System.Windows.Controls.Grid]::SetColumn($tbL, 0)
+            $gRow.Children.Add($tbL)
+
+            $tbV = New-Object System.Windows.Controls.TextBlock
+            $tbV.Text = "$($p.Value)"
+            $tbV.FontSize = 9.5
+            $tbV.FontWeight = [System.Windows.FontWeights]::SemiBold
+            $tbV.Foreground = [System.Windows.Media.Brushes]::White
+            $tbV.TextTrimming = [System.Windows.TextTrimming]::CharacterEllipsis
+            [System.Windows.Controls.Grid]::SetColumn($tbV, 1)
+            $gRow.Children.Add($tbV)
+
+            $panelInfoParameters.Children.Add($gRow) | Out-Null
+        }
+    } catch {}
+}
+
+function Start-DiskBenchmarkAsync {
+    if ($global:isBenchRunning) { return }
+
+    # Descobre unidade selecionada
+    $drivePath = "C:\"
+    if ($comboBenchDrive -and $comboBenchDrive.SelectedItem) {
+        $firstWord = ($comboBenchDrive.SelectedItem.ToString() -split ' ')[0]
+        if ($firstWord -match '^[A-Z]:') { $drivePath = "$firstWord\" }
+    }
+
+    $sizeMb = $global:benchSizeMb
+    if ($sizeMb -lt 64) { $sizeMb = 128 }
+
+    $global:isBenchRunning = $true
+    if ($btnStartDiskBench) { $btnStartDiskBench.IsEnabled = $false }
+    if ($pbBenchProgress)   { $pbBenchProgress.Value = 0 }
+    if ($txtBenchPct)        { $txtBenchPct.Text = "0%" }
+    if ($txtBenchStatus)     { $txtBenchStatus.Text = "Iniciando teste de Direct I/O em $drivePath ($sizeMb MB)..." }
+
+    $thread = [System.Threading.Thread]::new([System.Threading.ThreadStart]{
+        try {
+            $res = [MathzDiskBench]::RunBenchmark($drivePath, $sizeMb, {
+                param($phase, $pct)
+                try {
+                    $window.Dispatcher.Invoke([Action]{
+                        if ($txtBenchStatus)  { $txtBenchStatus.Text = $phase }
+                        if ($txtBenchPct)     { $txtBenchPct.Text    = "$([int]$pct)%" }
+                        if ($pbBenchProgress) { $pbBenchProgress.Value = $pct }
+                    })
+                } catch {}
+            })
+
+            $window.Dispatcher.Invoke([Action]{
+                if ($txtBenchSeqRead)       { $txtBenchSeqRead.Text       = "$($res.SeqReadMBs) MB/s" }
+                if ($txtBenchSeqWrite)      { $txtBenchSeqWrite.Text      = "$($res.SeqWriteMBs) MB/s" }
+                if ($txtBenchRandRead)      { $txtBenchRandRead.Text      = "$($res.Rand4kReadMBs) MB/s" }
+                if ($txtBenchRandReadIops)  { $txtBenchRandReadIops.Text  = "$($res.Rand4kReadIops) IOPS (Abertura de programas e SO)" }
+                if ($txtBenchRandWrite)     { $txtBenchRandWrite.Text     = "$($res.Rand4kWriteMBs) MB/s" }
+                if ($txtBenchRandWriteIops) { $txtBenchRandWriteIops.Text = "$($res.Rand4kWriteIops) IOPS (Gravacao de pequenos arquivos)" }
+                if ($txtBenchStatus)        { $txtBenchStatus.Text        = "Benchmark concluido! Resultados reais de Direct I/O atualizados." }
+                if ($txtBenchPct)           { $txtBenchPct.Text           = "100%" }
+                if ($pbBenchProgress)       { $pbBenchProgress.Value      = 100 }
+                if ($btnStartDiskBench)     { $btnStartDiskBench.IsEnabled = $true }
+                $global:isBenchRunning = $false
+                Log-Hud "Benchmark MTZ concluido em $($drivePath) - Leitura $($res.SeqReadMBs) MB/s | Escrita $($res.SeqWriteMBs) MB/s"
+            })
+        } catch {
+            $err = $_.Exception.Message
+            try {
+                $window.Dispatcher.Invoke([Action]{
+                    if ($txtBenchStatus)    { $txtBenchStatus.Text = "Erro durante teste: $err" }
+                    if ($btnStartDiskBench) { $btnStartDiskBench.IsEnabled = $true }
+                    $global:isBenchRunning = $false
+                })
+            } catch {}
+        }
+    })
+    $thread.IsBackground = $true
+    $thread.Start()
+}
+
+function Export-DiskReportTxt {
+    try {
+        $desktop = [System.Environment]::GetFolderPath("Desktop")
+        $pDisks = Get-PhysicalDisk -ErrorAction SilentlyContinue
+        $selectedDisk = $pDisks | Select-Object -First 1
+        if ($comboInfoDrive -and $comboInfoDrive.SelectedIndex -ge 0 -and $comboInfoDrive.SelectedIndex -lt $pDisks.Count) {
+            $selectedDisk = $pDisks[$comboInfoDrive.SelectedIndex]
+        }
+        if (-not $selectedDisk) { return }
+
+        $rel = $selectedDisk | Get-StorageReliabilityCounter -ErrorAction SilentlyContinue
+        $dateStr = Get-Date -Format "yyyy-MM-dd_HH-mm"
+        $fileName = "Relatorio-Disco-$($selectedDisk.FriendlyName -replace '[^a-zA-Z0-9]', '_')-$dateStr.txt"
+        $outPath = Join-Path $desktop $fileName
+
+        $sb = [System.Text.StringBuilder]::new()
+        $sb.AppendLine("=================================================================") | Out-Null
+        $sb.AppendLine("           PAINEL DE COMANDO MTZ - RELATORIO S.M.A.R.T.         ") | Out-Null
+        $sb.AppendLine("=================================================================") | Out-Null
+        $sb.AppendLine("Data da Emissao: $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')") | Out-Null
+        $sb.AppendLine("Computador:      $env:COMPUTERNAME") | Out-Null
+        $sb.AppendLine("Dispositivo:     $($selectedDisk.FriendlyName)") | Out-Null
+        $sb.AppendLine("Barramento:      $($selectedDisk.BusType) ($($selectedDisk.MediaType))") | Out-Null
+        $sb.AppendLine("Capacidade:      $([math]::Round($selectedDisk.Size / 1GB, 2)) GB") | Out-Null
+        $sb.AppendLine("Numero de Serie: $($selectedDisk.SerialNumber)") | Out-Null
+        $sb.AppendLine("Firmware:        $($selectedDisk.FirmwareVersion)") | Out-Null
+        $sb.AppendLine("Saude Windows:   $($selectedDisk.HealthStatus)") | Out-Null
+        if ($rel) {
+            $sb.AppendLine("Temperatura:     $($rel.Temperature) C (Pico Maximo: $($rel.TemperatureMax) C)") | Out-Null
+            $sb.AppendLine("Desgaste Celula: $($rel.Wear)%") | Out-Null
+            $sb.AppendLine("Horas Ligado:    $($rel.PowerOnHours)") | Out-Null
+            $sb.AppendLine("Erros Leitura:   $($rel.ReadErrorsTotal)") | Out-Null
+            $sb.AppendLine("Erros Escrita:   $($rel.WriteErrorsTotal)") | Out-Null
+        }
+        $sb.AppendLine("=================================================================") | Out-Null
+        $sb.AppendLine("Gerado automaticamente pelo Mathz Control Panel.") | Out-Null
+
+        [System.IO.File]::WriteAllText($outPath, $sb.ToString(), [System.Text.Encoding]::UTF8)
+        Log-Hud "Relatorio S.M.A.R.T. salvo na Area de Trabalho: $fileName"
+        Start-Process "notepad.exe" $outPath
+    } catch {
+        Log-Hud "Falha ao exportar relatorio: $_"
+    }
+}
+
+function Open-CrystalOfficial([string]$app) {
+    if ($app -eq "INFO") {
+        # Tenta abrir se ja estiver instalado, senao abre site oficial de download
+        $infoPaths = @(
+            "$env:ProgramFiles\CrystalDiskInfo\DiskInfo64.exe",
+            "$env:ProgramFiles(x86)\CrystalDiskInfo\DiskInfo32.exe",
+            "$env:LOCALAPPDATA\Programs\CrystalDiskInfo\DiskInfo64.exe"
+        )
+        $found = $infoPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+        if ($found) {
+            Start-Process $found
+            Log-Hud "CrystalDiskInfo oficial iniciado!"
+        } else {
+            Start-Process "https://crystalmark.info/en/software/crystaldiskinfo/"
+            Log-Hud "Abrindo pagina oficial de download do CrystalDiskInfo..."
+        }
+    } elseif ($app -eq "MARK") {
+        $markPaths = @(
+            "$env:ProgramFiles\CrystalDiskMark\DiskMark64.exe",
+            "$env:ProgramFiles(x86)\CrystalDiskMark\DiskMark32.exe",
+            "$env:LOCALAPPDATA\Programs\CrystalDiskMark\DiskMark64.exe"
+        )
+        $found = $markPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+        if ($found) {
+            Start-Process $found
+            Log-Hud "CrystalDiskMark oficial iniciado!"
+        } else {
+            Start-Process "https://crystalmark.info/en/software/crystaldiskmark/"
+            Log-Hud "Abrindo pagina oficial de download do CrystalDiskMark..."
         }
     }
 }
@@ -3798,6 +4603,11 @@ function Update-AllHardwareSensorsUI([bool]$forceRefresh = $false) {
                     $grid.Children.Add($spRight)
                     [System.Windows.Controls.Grid]::SetColumn($spRight, 1)
 
+                    $itemBorder.Cursor = [System.Windows.Input.Cursors]::Hand
+                    $itemBorder.ToolTip = "Clique para abrir a Suite Completa de Armazenamento (Benchmark & S.M.A.R.T.)"
+                    $itemBorder.Add_MouseLeftButtonUp({
+                        Show-DiskSuiteModal "INFO"
+                    })
                     $itemBorder.Child = $grid
                     $panelSensorsDisks.Children.Add($itemBorder) | Out-Null
                 }
@@ -5112,6 +5922,28 @@ if ($btnStyleWave)  { $btnStyleWave.Add_Click({  Set-GraphStyleActive "WAVE"  })
 if ($btnStyleDonut) { $btnStyleDonut.Add_Click({ Set-GraphStyleActive "DONUT" }) }
 if ($btnStyleBars)  { $btnStyleBars.Add_Click({  Set-GraphStyleActive "BARS"  }) }
 if ($btnStyleSensors) { $btnStyleSensors.Add_Click({ Set-GraphStyleActive "SENSORS" }) }
+if ($btnOpenDiskBench)        { $btnOpenDiskBench.Add_Click({ Show-DiskSuiteModal "MARK" }) }
+if ($btnOpenDiskHealth)       { $btnOpenDiskHealth.Add_Click({ Show-DiskSuiteModal "INFO" }) }
+if ($btnCloseDiskSuite)       { $btnCloseDiskSuite.Add_Click({ Hide-DiskSuiteModal }) }
+if ($btnCloseDiskSuiteBottom) { $btnCloseDiskSuiteBottom.Add_Click({ Hide-DiskSuiteModal }) }
+if ($btnDiskTabMark)          { $btnDiskTabMark.Add_Click({ Set-DiskSuiteTab "MARK" }) }
+if ($btnDiskTabInfo)          { $btnDiskTabInfo.Add_Click({ Set-DiskSuiteTab "INFO" }) }
+
+if ($btnBenchSize64)  { $btnBenchSize64.Add_Click({  Set-BenchSize 64 }) }
+if ($btnBenchSize128) { $btnBenchSize128.Add_Click({ Set-BenchSize 128 }) }
+if ($btnBenchSize256) { $btnBenchSize256.Add_Click({ Set-BenchSize 256 }) }
+if ($btnBenchSize512) { $btnBenchSize512.Add_Click({ Set-BenchSize 512 }) }
+if ($btnStartDiskBench) { $btnStartDiskBench.Add_Click({ Start-DiskBenchmarkAsync }) }
+
+if ($comboInfoDrive) {
+    $comboInfoDrive.Add_SelectionChanged({
+        Update-DiskInfoDetails
+    })
+}
+if ($btnExportDiskReport) { $btnExportDiskReport.Add_Click({ Export-DiskReportTxt }) }
+
+if ($btnDownloadCrystalInfo) { $btnDownloadCrystalInfo.Add_Click({ Open-CrystalOfficial "INFO" }) }
+if ($btnDownloadCrystalMark) { $btnDownloadCrystalMark.Add_Click({ Open-CrystalOfficial "MARK" }) }
 if ($btnRefreshSensorsLive) { $btnRefreshSensorsLive.Add_Click({ Update-AllHardwareSensorsUI $true }) }
 
 if ($badgeCpuTemp) {

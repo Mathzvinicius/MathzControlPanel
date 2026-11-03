@@ -1,14 +1,15 @@
 {
-  "version": "3.6.0",
-  "versionCode": 360,
+  "version": "3.7.0",
+  "versionCode": 370,
   "releaseDate": "2026-11-03",
-  "title": "Painel de Comando MTZ v3.6.0 (Central de Temperaturas & Sensores NVMe)",
+  "title": "Painel de Comando MTZ v3.7.0 (Suíte CrystalDiskMark & CrystalDiskInfo Nativa)",
   "changelog": [
-    "Nova Central de Sensores & Temperaturas integrada na aba Clocks & Sensores",
-    "Monitoramento de temperaturas em tempo real de unidades SSDs NVMe e SATA via Windows Storage Reliability Counters",
-    "Detalhamento de Zonas Térmicas ACPI da placa-mãe e status térmico inteligente da CPU/GPU",
-    "Atalho direto para visão térmica completa ao clicar nos badges de temperatura da CPU e GPU",
-    "Refinamento do MarkC 1:1 mouse smooth curve e proteção total para touchpads"
+    "Nova Suíte de Armazenamento completa integrada no Painel (MTZ Disk Suite)",
+    "Motor nativo de CrystalDiskMark com Direct I/O (FILE_FLAG_NO_BUFFERING) medindo leitura/escrita sequencial e 4K IOPS",
+    "Diagnóstico avançado de CrystalDiskInfo com leitura completa de saúde S.M.A.R.T., desgaste de células e temperatura de pico",
+    "Exportação de relatório técnico completo em formato TXT direto para a Área de Trabalho",
+    "Atalhos oficiais de 1 clique para baixar os utilitários portáteis originais do Crystal Dew World",
+    "Botões dedicados CRYSTAL BENCH e S.M.A.R.T. INFO adicionados no card de discos em Sensores"
   ],
   "downloadUrl": "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe",
   "zipUrl": "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel-v3.0.zip",

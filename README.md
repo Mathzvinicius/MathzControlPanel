@@ -4,7 +4,7 @@ Central de Alta Performance, Telemetria em Tempo Real, OtimizaÃ§Ã£o de Hardw
 
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?logo=windows)
 ![4K Ready](https://img.shields.io/badge/Resolution-4K%20UHD%20Ready-red)
-![Version](https://img.shields.io/badge/Version-3.6%20Pro-green)
+![Version](https://img.shields.io/badge/Version-3.7%20Pro-green)
 ![License](https://img.shields.io/badge/License-Proprietary%20%2F%20MTZ-black)
 
 ---
@@ -20,6 +20,7 @@ Central de Alta Performance, Telemetria em Tempo Real, OtimizaÃ§Ã£o de Hardw
 
 ## ðŸŒŸ Principais Recursos
 
+- **âš¡ SuÃ­te de Armazenamento (CrystalDiskMark & CrystalDiskInfo):** Benchmark Direct I/O de velocidade real de disco (Leitura/Escrita Sequencial e 4K IOPS), leitura aprofundada de saÃºde S.M.A.R.T., desgaste de SSD e exportaÃ§Ã£o de relatÃ³rio tÃ©cnico.
 - **ðŸŒ¡ï¸ Central de Sensores & Temperaturas:** Monitoramento em tempo real de todas as temperaturas: Processador (Package/ACPI), Placa de VÃ­deo (GPU Core/VRAM) e Unidades de Armazenamento (SSDs NVMe, SATA e HDDs via SMART).
 - **ðŸš€ Telemetria em Tempo Real:** Monitoramento vetorial contÃ­nuo de CPU, MemÃ³ria RAM (fÃ­sica e em cache), temperatura tÃ©rmica e clocks.
 - **ðŸ–¥ï¸ Suporte Nativo a 4K UHD:** Interface 100% vetorial com DPI Awareness Per-Monitor V2, sem borrÃ£o ou perda de resoluÃ§Ã£o em monitores Full HD, 2K ou 4K.
