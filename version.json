@@ -1,15 +1,14 @@
 {
-  "version": "3.5.0",
-  "versionCode": 350,
-  "releaseDate": "2026-10-29",
-  "title": "Painel de Comando MTZ v3.5 (Ultra 4K & Tipografia Esportiva)",
+  "version": "3.5.1",
+  "versionCode": 351,
+  "releaseDate": "2026-11-03",
+  "title": "Painel de Comando MTZ v3.5.1 (MarkC 1:1 Mouse & Touchpad Fix)",
   "changelog": [
-    "Renderizacao nativa Ultra HD 4K e Per-Monitor V2 High-DPI sem borrão",
-    "Novas fontes de alta performance: Bebas Neue, Outfit e Orbitron",
-    "Seletor de tipografia com 4 temas na aba Aparência & Cores",
-    "Dimensionamento responsivo e adaptativo para monitores 4K / 2K / 1080p",
-    "Alinhamento de subpixel e aceleracao grafica Direct3D habilitada",
-    "Sistema de atualizacao automatica direta no painel (Auto-Update)"
+    "Nova curva de aceleração linear MarkC 1:1 oficial (MOUSE 2.reg)",
+    "Correção de congelamento de cursor e proteção total para touchpads",
+    "Verificação verdadeira no Kernel e Registro do Windows",
+    "Melhoria na aplicação e persistência de cursores eSports",
+    "Otimização da rotina de auditoria de tweaks da ISO"
   ],
   "downloadUrl": "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe",
   "zipUrl": "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel-v3.0.zip",
