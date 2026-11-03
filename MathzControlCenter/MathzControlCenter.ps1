@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     PAINEL DE COMANDO MTZ - v3.3 PRO
     Design: Minimalista Corporativo (Preto Profundo + Branco + Vermelho MTZ #FF1E27).
