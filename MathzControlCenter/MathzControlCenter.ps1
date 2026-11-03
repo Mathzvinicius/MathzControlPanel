@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     PAINEL DE COMANDO MTZ - v3.3 PRO
     Design: Minimalista Corporativo (Preto Profundo + Branco + Vermelho MTZ #FF1E27).
@@ -53,6 +53,21 @@ if (-not ([System.Management.Automation.PSTypeName]'MathzMemoryOptimizer').Type)
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool SetProcessDPIAware();
+    }
+"@
+}
+
+if (-not ([System.Management.Automation.PSTypeName]'MathzMouseOptimizer').Type) {
+    Add-Type -TypeDefinition @"
+    using System;
+    using System.Runtime.InteropServices;
+
+    public class MathzMouseOptimizer {
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, int[] pvParam, uint fWinIni);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, IntPtr pvParam, uint fWinIni);
     }
 "@
 }
@@ -1178,12 +1193,12 @@ foreach ($fDir in $fontCandidates) {
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Grid.Column="0">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="Desligar acelera&#x00E7;&#x00E3;o do mouse (Raw Input 1:1 &amp; Curvas Planas)" FontWeight="SemiBold" FontSize="12"/>
+                                                    <TextBlock Text="Desligar acelera&#x00E7;&#x00E3;o do mouse (Raw Input 1:1 MarkC Fix)" FontWeight="SemiBold" FontSize="12"/>
                                                     <Border Name="BadgeStatusMouse" Background="{DynamicResource Hover}" BorderThickness="1" BorderBrush="{DynamicResource LineStrong}" CornerRadius="4" Padding="6,1" Margin="8,0,0,0">
                                                         <TextBlock Name="TxtStatusMouse" Text="PENDENTE" Foreground="{DynamicResource Muted}" FontSize="8.5" FontWeight="Bold"/>
                                                     </Border>
                                                 </StackPanel>
-                                                <TextBlock Text="Remove aprimorar precis&#x00E3;o, zera acelera&#x00E7;&#x00E3;o angular e ajusta fila USB para mira 100% consistente." Foreground="{DynamicResource Muted}" FontSize="11.5" Margin="0,4,0,0"/>
+                                                <TextBlock Text="Aplica a curva linear MarkC 1:1, zera acelera&#x00E7;&#x00E3;o angular e mant&#x00EA;m mouse e touchpads 100% operacionais." Foreground="{DynamicResource Muted}" FontSize="11.5" Margin="0,4,0,0"/>
                                             </StackPanel>
                                             <Button Grid.Column="1" Name="BtnOptimizeMouse" Content="APLICAR" Style="{StaticResource OutlineButton}" Padding="12,5" VerticalAlignment="Center"/>
                                         </Grid>
@@ -3846,7 +3861,9 @@ function Update-RealHardwareUI {
 function Test-IsoTweakMouse {
     try {
         $p = Get-ItemProperty "HKCU:\Control Panel\Mouse" -ErrorAction Stop
-        return ($p.MouseSpeed -eq "0" -and $p.MouseThreshold1 -eq "0" -and $p.MouseThreshold2 -eq "0")
+        $hasFixX = ($p.SmoothMouseXCurve -and $p.SmoothMouseXCurve.Length -eq 40 -and $p.SmoothMouseXCurve[8] -eq 0xC0)
+        $hasFixY = ($p.SmoothMouseYCurve -and $p.SmoothMouseYCurve.Length -eq 40 -and $p.SmoothMouseYCurve[10] -eq 0x38)
+        return ($p.MouseSpeed -eq "0" -and $p.MouseThreshold1 -eq "0" -and $p.MouseThreshold2 -eq "0" -and $hasFixX -and $hasFixY)
     } catch { return $false }
 }
 
@@ -4040,14 +4057,47 @@ function Update-MathzTweaksChecklist {
 
 # Funcoes Individuais de Tweaks da ISO com Validacao Real
 function Invoke-IsoTweakMouse {
-    $reg = "HKCU:\Control Panel\Mouse"
-    Set-ItemProperty -Path $reg -Name "MouseSpeed" -Value "0" -Force
-    Set-ItemProperty -Path $reg -Name "MouseThreshold1" -Value "0" -Force
-    Set-ItemProperty -Path $reg -Name "MouseThreshold2" -Value "0" -Force
-    Set-ItemProperty -Path $reg -Name "MouseSensitivity" -Value "10" -Force
-    Set-ItemProperty -Path $reg -Name "SmoothMouseXCurve" -Value ([byte[]](0..39 | ForEach-Object {0})) -Force
-    Set-ItemProperty -Path $reg -Name "SmoothMouseYCurve" -Value ([byte[]](0..39 | ForEach-Object {0})) -Force
-    Log-Hud "Precisão 1:1 do mouse aplicada sem aceleracao artificial!"
+    # Curva MarkC 1-to-1 Fix (Windows 10/11 Scale 100% @ 6/11)
+    # Impede congelamento do cursor e mantem touchpads e mouses 100% funcionais em todos os hardwares
+    $curveX = [byte[]]@(
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0xC0, 0xCC, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x80, 0x99, 0x19, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x40, 0x66, 0x26, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x33, 0x33, 0x00, 0x00, 0x00, 0x00, 0x00
+    )
+    $curveY = [byte[]]@(
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x38, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0xA8, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00
+    )
+
+    $targets = @("HKCU:\Control Panel\Mouse")
+    if (Test-Path "Registry::HKEY_USERS\.DEFAULT\Control Panel\Mouse") {
+        $targets += "Registry::HKEY_USERS\.DEFAULT\Control Panel\Mouse"
+    }
+
+    foreach ($reg in $targets) {
+        if (-not (Test-Path $reg)) { New-Item -Path $reg -Force | Out-Null }
+        Set-ItemProperty -Path $reg -Name "MouseSpeed" -Value "0" -Type String -Force
+        Set-ItemProperty -Path $reg -Name "MouseThreshold1" -Value "0" -Type String -Force
+        Set-ItemProperty -Path $reg -Name "MouseThreshold2" -Value "0" -Type String -Force
+        Set-ItemProperty -Path $reg -Name "MouseSensitivity" -Value "10" -Type String -Force
+        Set-ItemProperty -Path $reg -Name "SmoothMouseXCurve" -Value $curveX -Type Binary -Force
+        Set-ItemProperty -Path $reg -Name "SmoothMouseYCurve" -Value $curveY -Type Binary -Force
+    }
+
+    # Atualiza em tempo real no Windows via User32
+    try {
+        $SPIF = 0x01 -bor 0x02
+        $mouseParams = [int[]]@(0, 0, 0)
+        [MathzMouseOptimizer]::SystemParametersInfo(0x001D, 0, $mouseParams, $SPIF) | Out-Null
+        [MathzMouseOptimizer]::SystemParametersInfo(0x0071, 0, [IntPtr]10, $SPIF) | Out-Null
+    } catch {}
+
+    Log-Hud "Curva MarkC 1:1 e zero aceleração aplicadas (mouse e touchpad protegidos)!"
 }
 
 function Invoke-IsoTweakHags {
@@ -4213,11 +4263,24 @@ function Invoke-RestoreDefaultTweaks {
     Log-Hud "Restaurando configuracoes de fabrica do Windows..."
     try {
         # 1. Mouse Padrao
-        $reg = "HKCU:\Control Panel\Mouse"
-        Set-ItemProperty -Path $reg -Name "MouseSpeed" -Value "1" -Force
-        Set-ItemProperty -Path $reg -Name "MouseThreshold1" -Value "6" -Force
-        Set-ItemProperty -Path $reg -Name "MouseThreshold2" -Value "10" -Force
-        Set-ItemProperty -Path $reg -Name "MouseSensitivity" -Value "10" -Force
+        $targets = @("HKCU:\Control Panel\Mouse")
+        if (Test-Path "Registry::HKEY_USERS\.DEFAULT\Control Panel\Mouse") {
+            $targets += "Registry::HKEY_USERS\.DEFAULT\Control Panel\Mouse"
+        }
+        foreach ($reg in $targets) {
+            Set-ItemProperty -Path $reg -Name "MouseSpeed" -Value "1" -Type String -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $reg -Name "MouseThreshold1" -Value "6" -Type String -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $reg -Name "MouseThreshold2" -Value "10" -Type String -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $reg -Name "MouseSensitivity" -Value "10" -Type String -Force -ErrorAction SilentlyContinue
+            Remove-ItemProperty -Path $reg -Name "SmoothMouseXCurve" -Force -ErrorAction SilentlyContinue
+            Remove-ItemProperty -Path $reg -Name "SmoothMouseYCurve" -Force -ErrorAction SilentlyContinue
+        }
+        try {
+            $SPIF = 0x01 -bor 0x02
+            $defaultMouseParams = [int[]]@(6, 10, 1)
+            [MathzMouseOptimizer]::SystemParametersInfo(0x001D, 0, $defaultMouseParams, $SPIF) | Out-Null
+            [MathzMouseOptimizer]::SystemParametersInfo(0x0071, 0, [IntPtr]10, $SPIF) | Out-Null
+        } catch {}
 
         # 2. HAGS Padrao (1)
         Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "HwSchMode" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
