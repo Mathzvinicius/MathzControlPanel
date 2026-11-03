@@ -16,14 +16,14 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("MTZ")]
 [assembly: AssemblyProduct("Painel de Comando MTZ")]
 [assembly: AssemblyCopyright("Copyright © MTZ 2026")]
-[assembly: AssemblyVersion("3.5.1.0")]
-[assembly: AssemblyFileVersion("3.5.1.0")]
+[assembly: AssemblyVersion("3.6.0.0")]
+[assembly: AssemblyFileVersion("3.6.0.0")]
 
 namespace MathzControl
 {
     public static class Program
     {
-        private const string AppVersion = "v3.5.1-standalone";
+        private const string AppVersion = "v3.6.0-standalone";
         private static Form _splash;
 
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]

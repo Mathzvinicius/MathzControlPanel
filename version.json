@@ -1,14 +1,14 @@
 {
-  "version": "3.5.1",
-  "versionCode": 351,
+  "version": "3.6.0",
+  "versionCode": 360,
   "releaseDate": "2026-11-03",
-  "title": "Painel de Comando MTZ v3.5.1 (MarkC 1:1 Mouse & Touchpad Fix)",
+  "title": "Painel de Comando MTZ v3.6.0 (Central de Temperaturas & Sensores NVMe)",
   "changelog": [
-    "Nova curva de aceleração linear MarkC 1:1 oficial (MOUSE 2.reg)",
-    "Correção de congelamento de cursor e proteção total para touchpads",
-    "Verificação verdadeira no Kernel e Registro do Windows",
-    "Melhoria na aplicação e persistência de cursores eSports",
-    "Otimização da rotina de auditoria de tweaks da ISO"
+    "Nova Central de Sensores & Temperaturas integrada na aba Clocks & Sensores",
+    "Monitoramento de temperaturas em tempo real de unidades SSDs NVMe e SATA via Windows Storage Reliability Counters",
+    "Detalhamento de Zonas Térmicas ACPI da placa-mãe e status térmico inteligente da CPU/GPU",
+    "Atalho direto para visão térmica completa ao clicar nos badges de temperatura da CPU e GPU",
+    "Refinamento do MarkC 1:1 mouse smooth curve e proteção total para touchpads"
   ],
   "downloadUrl": "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe",
   "zipUrl": "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel-v3.0.zip",

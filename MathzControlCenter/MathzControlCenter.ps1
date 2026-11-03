@@ -570,8 +570,8 @@ foreach ($fDir in $fontCandidates) {
                             <ProgressBar Name="PbRam" Height="3" Background="{DynamicResource Line}" Foreground="#FFFFFF" BorderThickness="0" Value="0" Margin="0,2,0,5"/>
 
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                <TextBlock Text="v3.5 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
-                                <Button Name="BtnCheckUpdates" Style="{StaticResource OutlineButton}" Content="VERIFICAR ATUALIZAÃ‡ÃƒO" FontSize="8.5" Padding="6,2" Margin="6,0,0,0" ToolTip="Verificar novas versÃµes no servidor oficial"/>
+                                <TextBlock Text="v3.6 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
+                                <Button Name="BtnCheckUpdates" Style="{StaticResource OutlineButton}" Content="VERIFICAR ATUALIZAR" FontSize="8.5" Padding="6,2" Margin="6,0,0,0" ToolTip="Verificar novas versoes no servidor oficial"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -847,7 +847,8 @@ foreach ($fDir in $fontCandidates) {
                                             <StackPanel Orientation="Horizontal">
                                                 <Button Name="BtnStyleWave"  Style="{StaticResource GraphPillButton}" Content="Onda"  ToolTip="Gr&#x00E1;fico cont&#x00ED;nuo em onda / linha temporal"/>
                                                 <Button Name="BtnStyleDonut" Style="{StaticResource GraphPillButton}" Content="Pizza" ToolTip="Medidores circulares em formato de pizza / donut"/>
-                                                <Button Name="BtnStyleBars"  Style="{StaticResource GraphPillButton}" Content="Barras" Margin="0" ToolTip="Gr&#x00E1;fico de barras e espectro de par&#x00E2;metros"/>
+                                                <Button Name="BtnStyleBars"    Style="{StaticResource GraphPillButton}" Content="Barras"   ToolTip="Gr&#x00E1;fico de barras e espectro de par&#x00E2;metros"/>
+                                                <Button Name="BtnStyleSensors" Style="{StaticResource GraphPillButton}" Content="Sensores" Margin="0" ToolTip="Central completa de temperaturas e sensores de hardware (CPU, GPU, SSDs NVMe)"/>
                                             </StackPanel>
                                         </Border>
 
@@ -1070,6 +1071,146 @@ foreach ($fDir in $fontCandidates) {
                                             </Grid>
                                             <ProgressBar Style="{StaticResource MiniProgress}" Foreground="#FFFFFF" Value="100"/>
                                         </StackPanel>
+                                    </Border>
+                                </Grid>
+                                <!-- ESTILO 4: CENTRAL DE TEMPERATURAS & SENSORES DE HARDWARE -->
+                                <Grid Name="GridGraphSensors" Grid.Row="1" Margin="0,8,0,0" Visibility="Collapsed">
+                                    <Grid.ColumnDefinitions>
+                                        <!-- Coluna 1: CPU & Placa de Video (Temps Principais) -->
+                                        <ColumnDefinition Width="1.1*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <!-- Coluna 2: Armazenamento / Discos SSDs & NVMe -->
+                                        <ColumnDefinition Width="1.4*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <!-- Coluna 3: Zonas Termicas ACPI & Acoes -->
+                                        <ColumnDefinition Width="1*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Card 1: PROCESSADOR & GPU (NUCLEOS PRINCIPAIS) -->
+                                    <Border Grid.Column="0" Background="#0C0C0C" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="12,10">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+                                            <!-- Bloco CPU -->
+                                            <StackPanel Grid.Row="0" Margin="0,0,0,4">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                                    <TextBlock Text="&#xE7F8;" FontFamily="{StaticResource Icons}" FontSize="12" Foreground="#00FF66" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="PROCESSADOR (CPU)" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}"/>
+                                                </StackPanel>
+                                                <TextBlock Name="TxtSensorsCpuName" Text="Detectando CPU..." FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Fg}" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <Border Grid.Row="1" Background="#070707" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="10,6" Margin="0,0,0,8">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="TEMPERATURA N&#x00DA;CLEO" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Faint}"/>
+                                                        <TextBlock Name="TxtSensorsCpuTemp" Text="-- &#x00B0;C" FontSize="24" FontWeight="Bold" Foreground="#00FF66" FontFamily="{DynamicResource Heading}"/>
+                                                        <TextBlock Name="TxtSensorsCpuStatus" Text="Est&#x00E1;vel / Seguro" FontSize="9.5" FontWeight="SemiBold" Foreground="#00FF66"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                        <TextBlock Text="Carga Atual:" FontSize="9" Foreground="{DynamicResource Faint}"/>
+                                                        <TextBlock Name="TxtSensorsCpuLoad" Text="-- %" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Fg}" HorizontalAlignment="Right"/>
+                                                        <TextBlock Name="TxtSensorsCpuTurbo" Text="Turbo Ativo" FontSize="8.5" Foreground="{DynamicResource Muted}" HorizontalAlignment="Right" Margin="0,2,0,0"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- Bloco GPU -->
+                                            <StackPanel Grid.Row="2" Margin="0,0,0,4">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                                    <TextBlock Text="&#xE7F4;" FontFamily="{StaticResource Icons}" FontSize="12" Foreground="#00E5FF" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="PLACA DE V&#x00CD;DEO (GPU)" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}"/>
+                                                </StackPanel>
+                                                <TextBlock Name="TxtSensorsGpuName" Text="Detectando GPU..." FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Fg}" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <Border Grid.Row="3" Background="#070707" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="TEMPERATURA GPU" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Faint}"/>
+                                                        <TextBlock Name="TxtSensorsGpuTemp" Text="-- &#x00B0;C" FontSize="24" FontWeight="Bold" Foreground="#00E5FF" FontFamily="{DynamicResource Heading}"/>
+                                                        <TextBlock Name="TxtSensorsGpuStatus" Text="PCIe x16 Full Speed" FontSize="9.5" FontWeight="SemiBold" Foreground="#00E5FF"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                        <TextBlock Text="Frequ&#x00EA;ncia:" FontSize="9" Foreground="{DynamicResource Faint}"/>
+                                                        <TextBlock Name="TxtSensorsGpuClock" Text="-- MHz" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Fg}" HorizontalAlignment="Right"/>
+                                                        <TextBlock Text="Uso GPU:" FontSize="9" Foreground="{DynamicResource Faint}" Margin="0,2,0,0"/>
+                                                        <TextBlock Name="TxtSensorsGpuLoad" Text="-- %" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Fg}" HorizontalAlignment="Right"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Card 2: DISCOS & ARMAZENAMENTO (SSDs NVMe, SATA, HDDs) -->
+                                    <Border Grid.Column="2" Background="#0C0C0C" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="12,10">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="&#xEDA2;" FontFamily="{StaticResource Icons}" FontSize="12" Foreground="#FF1E27" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="DISCOS &amp; ARMAZENAMENTO" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}"/>
+                                                    <TextBlock Text=" (S.M.A.R.T.)" FontSize="9" Foreground="{DynamicResource Faint}"/>
+                                                </StackPanel>
+                                                <Border Background="#121212" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="4" Padding="5,1" HorizontalAlignment="Right">
+                                                    <TextBlock Name="TxtSensorsDiskCount" Text="1 Unidade" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource Fg}"/>
+                                                </Border>
+                                            </Grid>
+
+                                            <!-- Lista Dinamica de Discos e SSDs -->
+                                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                                <StackPanel Name="PanelSensorsDisks" Margin="0,0,4,0"/>
+                                            </ScrollViewer>
+
+                                            <TextBlock Grid.Row="2" Text="* Monitoramento cont&#x00ED;nuo via Windows Storage Reliability Counters" FontSize="8" Foreground="{DynamicResource Faint}" Margin="0,4,0,0"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Card 3: ZONAS TERMICAS DA PLACA-MAE & RESUMO GLOBAL -->
+                                    <Border Grid.Column="4" Background="#0C0C0C" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="12,10">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="&#xE7E8;" FontFamily="{StaticResource Icons}" FontSize="12" Foreground="#FFAA00" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="ZONAS T&#x00C9;RMICAS ACPI" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}"/>
+                                                </StackPanel>
+                                                <TextBlock Text="Motherboard &amp; Chipset" FontSize="8.5" Foreground="{DynamicResource Faint}"/>
+                                            </StackPanel>
+
+                                            <!-- Lista de Zonas Termicas ACPI -->
+                                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                                <StackPanel Name="PanelSensorsThermalZones" Margin="0,0,4,0"/>
+                                            </ScrollViewer>
+
+                                            <!-- Rodape com botao de atualizacao forcada dos sensores -->
+                                            <Border Grid.Row="2" Margin="0,6,0,0" Padding="0">
+                                                <Button Name="BtnRefreshSensorsLive" Style="{StaticResource OutlineButton}" Padding="8,5" HorizontalAlignment="Stretch" ToolTip="Consultar todos os contadores de temperatura agora">
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                        <TextBlock Text="&#xE72C;" FontFamily="{StaticResource Icons}" FontSize="10" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="ATUALIZAR SENSORES" FontSize="9.5" FontWeight="Bold"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </Border>
+                                        </Grid>
                                     </Border>
                                 </Grid>
                             </Grid>
@@ -2116,6 +2257,24 @@ $gridGraphDonut         = $window.FindName("GridGraphDonut")
 $gridGraphBars          = $window.FindName("GridGraphBars")
 $panelWaveFilters       = $window.FindName("PanelWaveFilters")
 $txtGraphSubTitle       = $window.FindName("TxtGraphSubTitle")
+$btnStyleSensors        = $window.FindName("BtnStyleSensors")
+$gridGraphSensors       = $window.FindName("GridGraphSensors")
+
+# Elementos Estilo Sensores & Temperaturas
+$txtSensorsCpuName       = $window.FindName("TxtSensorsCpuName")
+$txtSensorsCpuTemp       = $window.FindName("TxtSensorsCpuTemp")
+$txtSensorsCpuLoad       = $window.FindName("TxtSensorsCpuLoad")
+$txtSensorsCpuTurbo      = $window.FindName("TxtSensorsCpuTurbo")
+$txtSensorsCpuStatus     = $window.FindName("TxtSensorsCpuStatus")
+$txtSensorsGpuName       = $window.FindName("TxtSensorsGpuName")
+$txtSensorsGpuTemp       = $window.FindName("TxtSensorsGpuTemp")
+$txtSensorsGpuClock      = $window.FindName("TxtSensorsGpuClock")
+$txtSensorsGpuLoad       = $window.FindName("TxtSensorsGpuLoad")
+$txtSensorsGpuStatus     = $window.FindName("TxtSensorsGpuStatus")
+$panelSensorsDisks       = $window.FindName("PanelSensorsDisks")
+$txtSensorsDiskCount     = $window.FindName("TxtSensorsDiskCount")
+$panelSensorsThermalZones= $window.FindName("PanelSensorsThermalZones")
+$btnRefreshSensorsLive   = $window.FindName("BtnRefreshSensorsLive")
 
 # Elementos Estilo Donut (Pizza)
 $donutPathCpu           = $window.FindName("DonutPathCpu")
@@ -2522,7 +2681,7 @@ function Show-ModalUpdate([string]$vTitle, [string]$vNum, [string]$vChangelog, [
 }
 
 function Check-MathzUpdate([bool]$interactive = $false) {
-    $currentVersionCode = 351
+    $currentVersionCode = 360
     $updateManifestUrl = "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/version.json"
 
     if ($interactive) {
@@ -2538,8 +2697,8 @@ function Check-MathzUpdate([bool]$interactive = $false) {
             Log-Hud "Nova versao encontrada: $($json.version)!"
         } else {
             if ($interactive) {
-                Log-Hud "Voce ja esta com a versao mais recente instalada (v3.5.1 Pro)!"
-                [System.Windows.MessageBox]::Show("Voce ja esta utilizando a versao mais recente do Painel de Comando MTZ (v3.5.1 Pro).`n`nNenhuma atualizacao necessaria no momento.", "Painel de Comando MTZ", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information) | Out-Null
+                Log-Hud "Voce ja esta com a versao mais recente instalada (v3.6.0 Pro)!"
+                [System.Windows.MessageBox]::Show("Voce ja esta utilizando a versao mais recente do Painel de Comando MTZ (v3.6.0 Pro).`n`nNenhuma atualizacao necessaria no momento.", "Painel de Comando MTZ", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information) | Out-Null
             }
         }
     } catch {
@@ -3469,6 +3628,258 @@ function Get-HardwareTemperatures {
 }
 
 # ==============================================================================
+# MOTOR DE MONITORAMENTO DE SENSORES & TEMPERATURAS (CPU, GPU, SSDS, TERMAL)
+# ==============================================================================
+$global:cachedDisksData          = $null
+$global:cachedThermalZonesData   = $null
+$global:lastSensorsDiskCheck     = [DateTime]::MinValue
+$global:cachedCpuName            = ""
+$global:cachedGpuName            = ""
+
+function Update-AllHardwareSensorsUI([bool]$forceRefresh = $false) {
+    try {
+        # 1. Informacoes basicas de CPU
+        if (-not $global:cachedCpuName) {
+            try {
+                $cpuObj = Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1 Name
+                if ($cpuObj -and $cpuObj.Name) { $global:cachedCpuName = $cpuObj.Name.Trim() }
+            } catch {}
+            if (-not $global:cachedCpuName) { $global:cachedCpuName = "Processador Principal" }
+        }
+        if ($txtSensorsCpuName) { $txtSensorsCpuName.Text = $global:cachedCpuName }
+
+        $curCpuVal = if ($global:cpuHistory.Count -gt 0) { [int]$global:cpuHistory[-1] } else { 0 }
+        if ($txtSensorsCpuLoad) { $txtSensorsCpuLoad.Text = "$curCpuVal %" }
+
+        $cpuDeg = $global:lastCpuTemp
+        if ($txtSensorsCpuTemp) {
+            $txtSensorsCpuTemp.Text = if ($cpuDeg -gt 0) { "$cpuDeg " + [char]0x00B0 + "C" } else { "Ativo" }
+            $tempBrush = if ($cpuDeg -ge $global:thermalAlertThreshold) { "#FF1E27" } elseif ($cpuDeg -ge 70) { "#FFAA00" } else { "#00FF66" }
+            $txtSensorsCpuTemp.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString($tempBrush)
+        }
+        if ($txtSensorsCpuStatus) {
+            $statusText = if ($cpuDeg -ge $global:thermalAlertThreshold) { "Temperatura Elevada" } elseif ($cpuDeg -ge 70) { "Morno (Carga Alta)" } else { "Estavel / Seguro" }
+            $txtSensorsCpuStatus.Text = $statusText
+            $statusBrush = if ($cpuDeg -ge $global:thermalAlertThreshold) { "#FF1E27" } elseif ($cpuDeg -ge 70) { "#FFAA00" } else { "#00FF66" }
+            $txtSensorsCpuStatus.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString($statusBrush)
+        }
+
+        # 2. Informacoes de GPU
+        if ($global:hasNvidiaSmi) {
+            try {
+                $smiOut = & nvidia-smi --query-gpu=name,temperature.gpu,utilization.gpu,clocks.gr --format=csv,noheader,nounits 2>$null
+                if ($smiOut) {
+                    $parts = ($smiOut -split ',').Trim()
+                    if ($parts.Count -ge 4) {
+                        $global:cachedGpuName = $parts[0]
+                        if ($txtSensorsGpuName)  { $txtSensorsGpuName.Text  = $global:cachedGpuName }
+                        if ($txtSensorsGpuTemp) {
+                            $gDeg = [int]$parts[1]
+                            $txtSensorsGpuTemp.Text = "$gDeg " + [char]0x00B0 + "C"
+                            $gBrush = if ($gDeg -ge 80) { "#FF1E27" } elseif ($gDeg -ge 65) { "#FFAA00" } else { "#00E5FF" }
+                            $txtSensorsGpuTemp.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString($gBrush)
+                        }
+                        if ($txtSensorsGpuLoad)  { $txtSensorsGpuLoad.Text  = "$($parts[2]) %" }
+                        if ($txtSensorsGpuClock) { $txtSensorsGpuClock.Text = "$($parts[3]) MHz" }
+                    }
+                }
+            } catch {}
+        }
+        if (-not $global:cachedGpuName) {
+            try {
+                $gpuObj = Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue | Select-Object -First 1 Name
+                if ($gpuObj -and $gpuObj.Name) { $global:cachedGpuName = $gpuObj.Name.Trim() }
+            } catch {}
+            if ($txtSensorsGpuName) { $txtSensorsGpuName.Text = $global:cachedGpuName }
+        }
+
+        # 3. Discos & Armazenamento (NVMe, SSD, HDD) com cache inteligente de 8 segundos
+        $now = [DateTime]::UtcNow
+        $needDiskPoll = $forceRefresh -or ($global:cachedDisksData -eq $null) -or (($now - $global:lastSensorsDiskCheck).TotalSeconds -ge 8)
+        
+        if ($needDiskPoll) {
+            $global:lastSensorsDiskCheck = $now
+            $disksList = [System.Collections.Generic.List[PSCustomObject]]::new()
+            try {
+                $pDisks = Get-PhysicalDisk -ErrorAction SilentlyContinue
+                foreach ($pd in $pDisks) {
+                    $rel = $pd | Get-StorageReliabilityCounter -ErrorAction SilentlyContinue
+                    $t = if ($rel -and $rel.Temperature) { $rel.Temperature } else { 0 }
+                    $maxT = if ($rel -and $rel.TemperatureMax) { $rel.TemperatureMax } else { 0 }
+                    $wear = if ($rel -and $rel.Wear -ne $null) { "$($rel.Wear)%" } else { "0%" }
+                    $sizeGb = [math]::Round($pd.Size / 1GB, 0)
+
+                    $disksList.Add([PSCustomObject]@{ 
+                        FriendlyName = $pd.FriendlyName
+                        BusType      = $pd.BusType
+                        MediaType    = $pd.MediaType
+                        SizeGb       = $sizeGb
+                        Temp         = $t
+                        TempMax      = $maxT
+                        Wear         = $wear
+                        HealthStatus = $pd.HealthStatus
+                    })
+                }
+            } catch {}
+            $global:cachedDisksData = $disksList
+
+            if ($panelSensorsDisks) {
+                $panelSensorsDisks.Children.Clear()
+                if ($txtSensorsDiskCount) { $txtSensorsDiskCount.Text = "$($global:cachedDisksData.Count) Unidade(s)" }
+                
+                foreach ($d in $global:cachedDisksData) {
+                    $itemBorder = New-Object System.Windows.Controls.Border
+                    $itemBorder.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#070707")
+                    $itemBorder.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#1C1C1E")
+                    $itemBorder.BorderThickness = [System.Windows.Thickness]::new(1)
+                    $itemBorder.CornerRadius = [System.Windows.CornerRadius]::new(8)
+                    $itemBorder.Padding = [System.Windows.Thickness]::new(10, 8, 10, 8)
+                    $itemBorder.Margin = [System.Windows.Thickness]::new(0, 0, 0, 8)
+
+                    $grid = New-Object System.Windows.Controls.Grid
+                    $c1 = New-Object System.Windows.Controls.ColumnDefinition; $c1.Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
+                    $c2 = New-Object System.Windows.Controls.ColumnDefinition; $c2.Width = [System.Windows.GridLength]::Auto
+                    $grid.ColumnDefinitions.Add($c1)
+                    $grid.ColumnDefinitions.Add($c2)
+
+                    $spLeft = New-Object System.Windows.Controls.StackPanel
+                    $txtDiskModel = New-Object System.Windows.Controls.TextBlock
+                    $txtDiskModel.Text = $d.FriendlyName
+                    $txtDiskModel.FontSize = 11.5
+                    $txtDiskModel.FontWeight = [System.Windows.FontWeights]::SemiBold
+                    $txtDiskModel.Foreground = [System.Windows.Media.Brushes]::White
+                    $txtDiskModel.TextTrimming = [System.Windows.TextTrimming]::CharacterEllipsis
+                    $spLeft.Children.Add($txtDiskModel)
+
+                    $spTags = New-Object System.Windows.Controls.StackPanel
+                    $spTags.Orientation = [System.Windows.Controls.Orientation]::Horizontal
+                    $spTags.Margin = [System.Windows.Thickness]::new(0, 2, 0, 0)
+
+                    $txtType = New-Object System.Windows.Controls.TextBlock
+                    $txtType.Text = "$($d.BusType) $($d.MediaType)  $($d.SizeGb) GB"
+                    $txtType.FontSize = 9.5
+                    $txtType.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#8C8C8C")
+                    $spTags.Children.Add($txtType)
+                    $spLeft.Children.Add($spTags)
+
+                    $txtHealth = New-Object System.Windows.Controls.TextBlock
+                    $txtHealth.Text = "Saude: $($d.HealthStatus)  Desgaste: $($d.Wear)"
+                    $txtHealth.FontSize = 8.5
+                    $txtHealth.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#00FF66")
+                    $txtHealth.Margin = [System.Windows.Thickness]::new(0, 2, 0, 0)
+                    $spLeft.Children.Add($txtHealth)
+
+                    $grid.Children.Add($spLeft)
+                    [System.Windows.Controls.Grid]::SetColumn($spLeft, 0)
+
+                    $spRight = New-Object System.Windows.Controls.StackPanel
+                    $spRight.VerticalAlignment = [System.Windows.VerticalAlignment]::Center
+                    $spRight.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Right
+
+                    $txtT = New-Object System.Windows.Controls.TextBlock
+                    $txtT.Text = if ($d.Temp -gt 0) { "$($d.Temp) " + [char]0x00B0 + "C" } else { "N/D" }
+                    $txtT.FontSize = 18
+                    $txtT.FontWeight = [System.Windows.FontWeights]::Bold
+                    $txtT.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Right
+                    
+                    $tempColor = if ($d.Temp -ge 65) { "#FF1E27" } elseif ($d.Temp -ge 50) { "#FFAA00" } else { "#00E5FF" }
+                    $txtT.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString($tempColor)
+                    $spRight.Children.Add($txtT)
+
+                    if ($d.TempMax -gt 0) {
+                        $txtMax = New-Object System.Windows.Controls.TextBlock
+                        $txtMax.Text = "Pico: $($d.TempMax) " + [char]0x00B0 + "C"
+                        $txtMax.FontSize = 8.5
+                        $txtMax.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#555555")
+                        $txtMax.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Right
+                        $spRight.Children.Add($txtMax)
+                    }
+
+                    $grid.Children.Add($spRight)
+                    [System.Windows.Controls.Grid]::SetColumn($spRight, 1)
+
+                    $itemBorder.Child = $grid
+                    $panelSensorsDisks.Children.Add($itemBorder) | Out-Null
+                }
+            }
+
+            # 4. Zonas Termicas ACPI
+            if ($panelSensorsThermalZones) {
+                $panelSensorsThermalZones.Children.Clear()
+                try {
+                    $tzs = Get-CimInstance -Namespace 'root/wmi' -ClassName 'MSAcpi_ThermalZoneTemperature' -ErrorAction SilentlyContinue
+                    $hasAnyTz = $false
+                    foreach ($z in $tzs) {
+                        $c = [math]::Round(($z.CurrentTemperature - 2732) / 10.0, 1)
+                        if ($c -le 0 -or $c -gt 120) { continue }
+                        $hasAnyTz = $true
+
+                        $tzBorder = New-Object System.Windows.Controls.Border
+                        $tzBorder.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#070707")
+                        $tzBorder.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#1C1C1E")
+                        $tzBorder.BorderThickness = [System.Windows.Thickness]::new(1)
+                        $tzBorder.CornerRadius = [System.Windows.CornerRadius]::new(8)
+                        $tzBorder.Padding = [System.Windows.Thickness]::new(10, 6, 10, 6)
+                        $tzBorder.Margin = [System.Windows.Thickness]::new(0, 0, 0, 6)
+
+                        $gTz = New-Object System.Windows.Controls.Grid
+                        $col1 = New-Object System.Windows.Controls.ColumnDefinition; $col1.Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
+                        $col2 = New-Object System.Windows.Controls.ColumnDefinition; $col2.Width = [System.Windows.GridLength]::Auto
+                        $gTz.ColumnDefinitions.Add($col1)
+                        $gTz.ColumnDefinitions.Add($col2)
+
+                        $spTzLeft = New-Object System.Windows.Controls.StackPanel
+                        $txtTzInst = New-Object System.Windows.Controls.TextBlock
+                        $cleanInst = $z.InstanceName -replace '.*\\', ''
+                        $txtTzInst.Text = if ($cleanInst) { "Zona $cleanInst" } else { "Sensor ACPI Placa-Mae" }
+                        $txtTzInst.FontSize = 10
+                        $txtTzInst.FontWeight = [System.Windows.FontWeights]::SemiBold
+                        $txtTzInst.Foreground = [System.Windows.Media.Brushes]::White
+                        $txtTzInst.TextTrimming = [System.Windows.TextTrimming]::CharacterEllipsis
+                        $spTzLeft.Children.Add($txtTzInst)
+
+                        $txtTzSub = New-Object System.Windows.Controls.TextBlock
+                        $txtTzSub.Text = "ACPI ThermalZone"
+                        $txtTzSub.FontSize = 8.5
+                        $txtTzSub.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#555555")
+                        $spTzLeft.Children.Add($txtTzSub)
+
+                        $gTz.Children.Add($spTzLeft)
+                        [System.Windows.Controls.Grid]::SetColumn($spTzLeft, 0)
+
+                        $txtTzVal = New-Object System.Windows.Controls.TextBlock
+                        $txtTzVal.Text = "$c " + [char]0x00B0 + "C"
+                        $txtTzVal.FontSize = 16
+                        $txtTzVal.FontWeight = [System.Windows.FontWeights]::Bold
+                        $tzColor = if ($c -ge $global:thermalAlertThreshold) { "#FF1E27" } elseif ($c -ge 70) { "#FFAA00" } else { "#00FF66" }
+                        $txtTzVal.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString($tzColor)
+                        $txtTzVal.VerticalAlignment = [System.Windows.VerticalAlignment]::Center
+                        $gTz.Children.Add($txtTzVal)
+                        [System.Windows.Controls.Grid]::SetColumn($txtTzVal, 1)
+
+                        $tzBorder.Child = $gTz
+                        $panelSensorsThermalZones.Children.Add($tzBorder) | Out-Null
+                    }
+
+                    if (-not $hasAnyTz) {
+                        $tbEmpty = New-Object System.Windows.Controls.TextBlock
+                        $tbEmpty.Text = "Sensores ACPI integrados protegidos pela BIOS"
+                        $tbEmpty.FontSize = 9.5
+                        $tbEmpty.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#555555")
+                        $tbEmpty.Margin = [System.Windows.Thickness]::new(4, 8, 4, 0)
+                        $tbEmpty.TextWrapping = [System.Windows.TextWrapping]::Wrap
+                        $panelSensorsThermalZones.Children.Add($tbEmpty) | Out-Null
+                    }
+                } catch {}
+            }
+        }
+
+        if ($forceRefresh) {
+            Log-Hud "Sensores de hardware e temperaturas atualizados!"
+        }
+    } catch {}
+}
+# ==============================================================================
 # MOTOR GRAFICO VETORIAL E MULTI-MODO DE TELEMETRIA (ONDA, PIZZA, BARRAS)
 # ==============================================================================
 $global:cpuHistory = [System.Collections.Generic.List[double]]::new()
@@ -3537,26 +3948,41 @@ function Set-GraphStyleActive([string]$style) {
         $btnStyleBars.Background = if ($style -eq "BARS") { $brActive } else { $brInactive }
         $btnStyleBars.Foreground = if ($style -eq "BARS") { $fgActive } else { $fgInactive }
     }
+    if ($btnStyleSensors) {
+        $btnStyleSensors.Background = if ($style -eq "SENSORS") { $brActive } else { $brInactive }
+        $btnStyleSensors.Foreground = if ($style -eq "SENSORS") { $fgActive } else { $fgInactive }
+    }
 
     if ($style -eq "WAVE") {
-        if ($gridGraphWave)  { Animate-ViewIn $gridGraphWave }
-        if ($gridGraphDonut) { $gridGraphDonut.Visibility = [System.Windows.Visibility]::Collapsed }
-        if ($gridGraphBars)  { $gridGraphBars.Visibility  = [System.Windows.Visibility]::Collapsed }
+        if ($gridGraphWave)    { Animate-ViewIn $gridGraphWave }
+        if ($gridGraphDonut)   { $gridGraphDonut.Visibility   = [System.Windows.Visibility]::Collapsed }
+        if ($gridGraphBars)    { $gridGraphBars.Visibility    = [System.Windows.Visibility]::Collapsed }
+        if ($gridGraphSensors) { $gridGraphSensors.Visibility = [System.Windows.Visibility]::Collapsed }
         if ($panelWaveFilters) { $panelWaveFilters.Visibility = [System.Windows.Visibility]::Visible }
         if ($txtGraphSubTitle) { $txtGraphSubTitle.Text = " // HISTORICO DINAMICO (ONDA)" }
     } elseif ($style -eq "DONUT") {
-        if ($gridGraphWave)  { $gridGraphWave.Visibility  = [System.Windows.Visibility]::Collapsed }
-        if ($gridGraphDonut) { Animate-ViewIn $gridGraphDonut }
-        if ($gridGraphBars)  { $gridGraphBars.Visibility  = [System.Windows.Visibility]::Collapsed }
+        if ($gridGraphWave)    { $gridGraphWave.Visibility    = [System.Windows.Visibility]::Collapsed }
+        if ($gridGraphDonut)   { Animate-ViewIn $gridGraphDonut }
+        if ($gridGraphBars)    { $gridGraphBars.Visibility    = [System.Windows.Visibility]::Collapsed }
+        if ($gridGraphSensors) { $gridGraphSensors.Visibility = [System.Windows.Visibility]::Collapsed }
         if ($panelWaveFilters) { $panelWaveFilters.Visibility = [System.Windows.Visibility]::Collapsed }
         if ($txtGraphSubTitle) { $txtGraphSubTitle.Text = " // MEDIDORES CIRCULARES (PIZZA)" }
     } elseif ($style -eq "BARS") {
-        if ($gridGraphWave)  { $gridGraphWave.Visibility  = [System.Windows.Visibility]::Collapsed }
-        if ($gridGraphDonut) { $gridGraphDonut.Visibility = [System.Windows.Visibility]::Collapsed }
-        if ($gridGraphBars)  { Animate-ViewIn $gridGraphBars }
+        if ($gridGraphWave)    { $gridGraphWave.Visibility    = [System.Windows.Visibility]::Collapsed }
+        if ($gridGraphDonut)   { $gridGraphDonut.Visibility   = [System.Windows.Visibility]::Collapsed }
+        if ($gridGraphBars)    { Animate-ViewIn $gridGraphBars }
+        if ($gridGraphSensors) { $gridGraphSensors.Visibility = [System.Windows.Visibility]::Collapsed }
         if ($panelWaveFilters) { $panelWaveFilters.Visibility = [System.Windows.Visibility]::Collapsed }
         if ($txtGraphSubTitle) { $txtGraphSubTitle.Text = " // ESPECTRO DE SUBSISTEMAS (BARRAS)" }
         Initialize-HistogramBars
+    } elseif ($style -eq "SENSORS") {
+        if ($gridGraphWave)    { $gridGraphWave.Visibility    = [System.Windows.Visibility]::Collapsed }
+        if ($gridGraphDonut)   { $gridGraphDonut.Visibility   = [System.Windows.Visibility]::Collapsed }
+        if ($gridGraphBars)    { $gridGraphBars.Visibility    = [System.Windows.Visibility]::Collapsed }
+        if ($gridGraphSensors) { Animate-ViewIn $gridGraphSensors }
+        if ($panelWaveFilters) { $panelWaveFilters.Visibility = [System.Windows.Visibility]::Collapsed }
+        if ($txtGraphSubTitle) { $txtGraphSubTitle.Text = " // CENTRAL DE TEMPERATURAS & SENSORES" }
+        Update-AllHardwareSensorsUI $true
     }
 
     Update-TelemetryGraph -1 -1
@@ -3714,6 +4140,10 @@ function Update-TelemetryGraph([double]$newCpu, [double]$newRam) {
         if ($pbBarRam)      { $pbBarRam.Value = $curRam }
         if ($txtBarTempPct) { $txtBarTempPct.Text = "$($global:lastCpuTemp) " + [char]0x00B0 + "C" }
         if ($pbBarTemp)     { $pbBarTemp.Value = [math]::Min(105, $global:lastCpuTemp) }
+    }
+
+    if ($gridGraphSensors -and $gridGraphSensors.Visibility -eq [System.Windows.Visibility]::Visible) {
+        Update-AllHardwareSensorsUI $false
     }
 }
 function Update-RealHardwareUI {
@@ -4681,6 +5111,23 @@ if ($btnGraphBoth) { $btnGraphBoth.Add_Click({ Set-GraphModeActive "BOTH" }) }
 if ($btnStyleWave)  { $btnStyleWave.Add_Click({  Set-GraphStyleActive "WAVE"  }) }
 if ($btnStyleDonut) { $btnStyleDonut.Add_Click({ Set-GraphStyleActive "DONUT" }) }
 if ($btnStyleBars)  { $btnStyleBars.Add_Click({  Set-GraphStyleActive "BARS"  }) }
+if ($btnStyleSensors) { $btnStyleSensors.Add_Click({ Set-GraphStyleActive "SENSORS" }) }
+if ($btnRefreshSensorsLive) { $btnRefreshSensorsLive.Add_Click({ Update-AllHardwareSensorsUI $true }) }
+
+if ($badgeCpuTemp) {
+    $badgeCpuTemp.Cursor = [System.Windows.Input.Cursors]::Hand
+    $badgeCpuTemp.ToolTip = "Clique para abrir a Central Completa de Sensores e Temperaturas"
+    $badgeCpuTemp.Add_MouseLeftButtonUp({
+        Set-GraphStyleActive "SENSORS"
+    })
+}
+if ($badgeGpuTemp) {
+    $badgeGpuTemp.Cursor = [System.Windows.Input.Cursors]::Hand
+    $badgeGpuTemp.ToolTip = "Clique para abrir a Central Completa de Sensores e Temperaturas"
+    $badgeGpuTemp.Add_MouseLeftButtonUp({
+        Set-GraphStyleActive "SENSORS"
+    })
+}
 
 Set-GraphModeActive "BOTH"
 Set-GraphStyleActive "WAVE"
