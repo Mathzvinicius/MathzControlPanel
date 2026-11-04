@@ -7,26 +7,26 @@ Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue
 
 $compactArrowPts = [System.Drawing.Point[]]@(
     [System.Drawing.Point]::new(2, 2),
-    [System.Drawing.Point]::new(2, 16),
-    [System.Drawing.Point]::new(5, 13),
-    [System.Drawing.Point]::new(8, 19),
-    [System.Drawing.Point]::new(11, 18),
-    [System.Drawing.Point]::new(8, 12),
-    [System.Drawing.Point]::new(13, 12)
+    [System.Drawing.Point]::new(2, 23),
+    [System.Drawing.Point]::new(7, 18),
+    [System.Drawing.Point]::new(11, 27),
+    [System.Drawing.Point]::new(15, 25),
+    [System.Drawing.Point]::new(11, 17),
+    [System.Drawing.Point]::new(18, 17)
 )
 
 $compactHandPts = [System.Drawing.Point[]]@(
-    [System.Drawing.Point]::new(11, 3),
-    [System.Drawing.Point]::new(14, 3),
-    [System.Drawing.Point]::new(14, 10),
-    [System.Drawing.Point]::new(17, 11),
-    [System.Drawing.Point]::new(19, 13),
-    [System.Drawing.Point]::new(19, 21),
-    [System.Drawing.Point]::new(16, 24),
-    [System.Drawing.Point]::new(9, 24),
-    [System.Drawing.Point]::new(7, 19),
-    [System.Drawing.Point]::new(7, 15),
-    [System.Drawing.Point]::new(11, 13)
+    [System.Drawing.Point]::new(12, 2),
+    [System.Drawing.Point]::new(15, 2),
+    [System.Drawing.Point]::new(15, 11),
+    [System.Drawing.Point]::new(18, 12),
+    [System.Drawing.Point]::new(21, 14),
+    [System.Drawing.Point]::new(21, 22),
+    [System.Drawing.Point]::new(18, 26),
+    [System.Drawing.Point]::new(10, 26),
+    [System.Drawing.Point]::new(7, 21),
+    [System.Drawing.Point]::new(7, 16),
+    [System.Drawing.Point]::new(12, 14)
 )
 
 $nsPts = [System.Drawing.Point[]]@(
@@ -176,7 +176,7 @@ function Generate-MathzSuiteFiles {
     }
 
     $bIn = New-Object System.Drawing.SolidBrush $cIn
-    $pOut = New-Object System.Drawing.Pen $cOut, 1.3
+    $pOut = New-Object System.Drawing.Pen $cOut, 2.0; $pOut.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round; $pOut.StartCap = [System.Drawing.Drawing2D.LineCap]::Round; $pOut.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
     $bOut = New-Object System.Drawing.SolidBrush $cOut
 
     # 1. Arrow (Ponteiro Normal)
@@ -313,9 +313,37 @@ function Apply-MathzCustomColors {
         "Person"      = "$targetDir\mathz_person.cur"
     }
 
+    $schemeName = "Mathz Custom ($OutlineHex)"
+
+    # Registra no banco de esquemas do Windows (HKCU:\Control Panel\Cursors\Schemes)
+    $schemesPath = "HKCU:\Control Panel\Cursors\Schemes"
+    if (-not (Test-Path $schemesPath)) { New-Item -Path $schemesPath -Force | Out-Null }
+    $schemeVal = @(
+        $cursorMap["Arrow"],
+        $cursorMap["Help"],
+        $cursorMap["AppStarting"],
+        $cursorMap["Wait"],
+        $cursorMap["Crosshair"],
+        $cursorMap["IBeam"],
+        $cursorMap["NWPen"],
+        $cursorMap["No"],
+        $cursorMap["SizeNS"],
+        $cursorMap["SizeWE"],
+        $cursorMap["SizeNWSE"],
+        $cursorMap["SizeNESW"],
+        $cursorMap["SizeAll"],
+        $cursorMap["UpArrow"],
+        $cursorMap["Hand"],
+        $cursorMap["Pin"],
+        $cursorMap["Person"]
+    ) -join ","
+    Set-ItemProperty -Path $schemesPath -Name $schemeName -Value $schemeVal -Force
+
+    # Mapeia como esquema de usuario ativo (Scheme Source = 1)
     $curRegPath = "HKCU:\Control Panel\Cursors"
     if (-not (Test-Path $curRegPath)) { New-Item -Path $curRegPath -Force | Out-Null }
-    Set-ItemProperty -Path $curRegPath -Name "(Default)" -Value "Mathz Custom ($OutlineHex)" -Force
+    Set-ItemProperty -Path $curRegPath -Name "(Default)" -Value $schemeName -Force
+    Set-ItemProperty -Path $curRegPath -Name "Scheme Source" -Value 1 -Type DWord -Force
 
     foreach ($key in $cursorMap.Keys) {
         Set-ItemProperty -Path $curRegPath -Name $key -Value $cursorMap[$key] -Force
@@ -393,10 +421,6 @@ function Apply-MathzCustomColors {
                         }
                     } catch { }
                 }
-
-                try {
-                    SystemParametersInfo(SPI_SETCURSORS, 0, IntPtr.Zero, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
-                } catch { }
 
                 try {
                     IntPtr res;
