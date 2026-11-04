@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -16,14 +16,14 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("MTZ Performance")]
 [assembly: AssemblyProduct("Painel de Comando MTZ")]
 [assembly: AssemblyCopyright("Copyright MTZ 2026")]
-[assembly: AssemblyVersion("3.7.2.0")]
-[assembly: AssemblyFileVersion("3.7.2.0")]
+[assembly: AssemblyVersion("3.7.3.0")]
+[assembly: AssemblyFileVersion("3.7.3.0")]
 
 namespace MathzControl
 {
     public static class Program
     {
-        private const string AppVersion = "v3.7.2-standalone";
+        private const string AppVersion = "v3.7.3-standalone";
         private static Form _splash;
 
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
@@ -388,7 +388,7 @@ namespace MathzControl
                     if (key != null)
                     {
                         key.SetValue("DisplayName", "Painel de Comando MTZ");
-                        key.SetValue("DisplayVersion", "3.7.2 Pro");
+                        key.SetValue("DisplayVersion", "3.7.3 Pro");
                         key.SetValue("Publisher", "MTZ Performance");
                         key.SetValue("DisplayIcon", iconPath);
                         key.SetValue("InstallLocation", installDir);

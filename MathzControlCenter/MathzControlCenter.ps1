@@ -700,7 +700,7 @@ foreach ($fDir in $fontCandidates) {
                             <ProgressBar Name="PbRam" Height="3" Background="{DynamicResource Line}" Foreground="#FFFFFF" BorderThickness="0" Value="0" Margin="0,2,0,5"/>
 
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                <TextBlock Text="v3.7.2 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
+                                <TextBlock Text="v3.7.3 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
                                 <Button Name="BtnCheckUpdates" Style="{StaticResource OutlineButton}" Content="VERIFICAR ATUALIZAR" FontSize="8.5" Padding="6,2" Margin="6,0,0,0" ToolTip="Verificar novas versoes no servidor oficial"/>
                             </StackPanel>
                         </StackPanel>
@@ -1916,7 +1916,7 @@ foreach ($fDir in $fontCandidates) {
                                             <Border Margin="4" Background="{DynamicResource Card}" CornerRadius="8" Padding="6">
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <Canvas Width="28" Height="28">
-                                                        <Polygon Name="PrevPolyArrow" Points="2,2 24,14 14,16 9,25" Fill="#050508" Stroke="#FF003C" StrokeThickness="1.8"/>
+                                                        <Polygon Name="PrevPolyArrow" Points="3,2 3,19 7,15 11,23 15,22 11,14 17,14" Fill="#050508" Stroke="#FF1E27" StrokeThickness="1.6" StrokeLineJoin="Round"/>
                                                     </Canvas>
                                                     <TextBlock Text="Normal" Foreground="{DynamicResource Faint}" FontSize="8" HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                                 </StackPanel>
@@ -1924,19 +1924,20 @@ foreach ($fDir in $fontCandidates) {
                                             <Border Margin="4" Background="{DynamicResource Card}" CornerRadius="8" Padding="6">
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <Canvas Width="28" Height="28">
-                                                        <Polygon Name="PrevPolyAppArrow" Points="2,2 18,11 11,12 7,20" Fill="#050508" Stroke="#FF003C" StrokeThickness="1.5"/>
-                                                        <Ellipse Name="PrevEllAppBg" Canvas.Left="15" Canvas.Top="15" Width="10" Height="10" Stroke="#FF003C" StrokeThickness="1.5"/>
-                                                        <Ellipse Name="PrevEllAppDot" Canvas.Left="18" Canvas.Top="18" Width="4" Height="4" Fill="#FF003C"/>
+                                                        <Polygon Name="PrevPolyAppArrow" Points="2,2 2,16 5,13 8,19 11,18 8,12 13,12" Fill="#050508" Stroke="#FF1E27" StrokeThickness="1.3" StrokeLineJoin="Round"/>
+                                                        <Ellipse Name="PrevEllAppBg" Canvas.Left="14" Canvas.Top="12" Width="13" Height="13" Fill="#050508" Stroke="#FF1E27" StrokeThickness="1.2"/>
+                                                        <Path Name="PrevPathAppArc" Canvas.Left="14" Canvas.Top="12" Data="M 10,2 A 5,5 0 1,1 3,10" Stroke="#FF1E27" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        <Ellipse Name="PrevEllAppDot" Canvas.Left="18.5" Canvas.Top="16.5" Width="4" Height="4" Fill="#FF1E27"/>
                                                     </Canvas>
-                                                    <TextBlock Text="Ocupado" Foreground="{DynamicResource Faint}" FontSize="8" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="2Âº Plano" Foreground="{DynamicResource Faint}" FontSize="8" HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                                 </StackPanel>
                                             </Border>
                                             <Border Margin="4" Background="{DynamicResource Card}" CornerRadius="8" Padding="6">
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <Canvas Width="28" Height="28">
-                                                        <Ellipse Name="PrevEllWaitBg" Canvas.Left="3" Canvas.Top="3" Width="22" Height="22" Stroke="#252A36" StrokeThickness="2"/>
-                                                        <Path Name="PrevPathWaitArc" Canvas.Left="3" Canvas.Top="3" Data="M 14,3 A 11,11 0 0,1 25,14" Stroke="#FF003C" StrokeThickness="2.5"/>
-                                                        <Ellipse Name="PrevEllWaitDot" Canvas.Left="12" Canvas.Top="12" Width="4" Height="4" Fill="#FF003C"/>
+                                                        <Ellipse Name="PrevEllWaitBg" Canvas.Left="4" Canvas.Top="4" Width="20" Height="20" Fill="#050508" Stroke="#FF1E27" StrokeThickness="1.4"/>
+                                                        <Path Name="PrevPathWaitArc" Canvas.Left="4" Canvas.Top="4" Data="M 16,3 A 7,7 0 1,1 4,14" Stroke="#FF1E27" StrokeThickness="2.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        <Ellipse Name="PrevEllWaitDot" Canvas.Left="12" Canvas.Top="12" Width="4" Height="4" Fill="#FF1E27"/>
                                                     </Canvas>
                                                     <TextBlock Text="Aguarde" Foreground="{DynamicResource Faint}" FontSize="8" HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                                 </StackPanel>
@@ -1944,12 +1945,12 @@ foreach ($fDir in $fontCandidates) {
                                             <Border Margin="4" Background="{DynamicResource Card}" CornerRadius="8" Padding="6">
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <Canvas Width="28" Height="28">
-                                                        <Line Name="PrevLineCrossH1" X1="2" Y1="14" X2="9" Y2="14" Stroke="#FF003C" StrokeThickness="1.8"/>
-                                                        <Line Name="PrevLineCrossH2" X1="19" Y1="14" X2="26" Y2="14" Stroke="#FF003C" StrokeThickness="1.8"/>
-                                                        <Line Name="PrevLineCrossV1" X1="14" Y1="2" X2="14" Y2="9" Stroke="#FF003C" StrokeThickness="1.8"/>
-                                                        <Line Name="PrevLineCrossV2" X1="14" Y1="19" X2="14" Y2="26" Stroke="#FF003C" StrokeThickness="1.8"/>
-                                                        <Ellipse Name="PrevEllCrossRing" Canvas.Left="9" Canvas.Top="9" Width="10" Height="10" Stroke="#FF003C" StrokeThickness="1.2"/>
-                                                        <Ellipse Name="PrevEllCrossDot" Canvas.Left="13" Canvas.Top="13" Width="2" Height="2" Fill="#FFFFFF"/>
+                                                        <Line Name="PrevLineCrossH1" X1="2" Y1="14" X2="9" Y2="14" Stroke="#FF1E27" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        <Line Name="PrevLineCrossH2" X1="19" Y1="14" X2="26" Y2="14" Stroke="#FF1E27" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        <Line Name="PrevLineCrossV1" X1="14" Y1="2" X2="14" Y2="9" Stroke="#FF1E27" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        <Line Name="PrevLineCrossV2" X1="14" Y1="19" X2="14" Y2="26" Stroke="#FF1E27" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        <Ellipse Name="PrevEllCrossRing" Canvas.Left="9" Canvas.Top="9" Width="10" Height="10" Stroke="#FF1E27" StrokeThickness="1.2"/>
+                                                        <Ellipse Name="PrevEllCrossDot" Canvas.Left="13" Canvas.Top="13" Width="2" Height="2" Fill="#FF1E27"/>
                                                     </Canvas>
                                                     <TextBlock Text="Mira" Foreground="{DynamicResource Faint}" FontSize="8" HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                                 </StackPanel>
@@ -1957,8 +1958,8 @@ foreach ($fDir in $fontCandidates) {
                                             <Border Margin="4" Background="{DynamicResource Card}" CornerRadius="8" Padding="6">
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <Canvas Width="28" Height="28">
-                                                        <Polygon Name="PrevPolyHand" Points="10,2 14,2 14,9 17,10 19,12 19,20 16,23 9,23 7,18 7,14 10,12" Fill="#050508" Stroke="#FF1E27" StrokeThickness="1.8"/>
-                                                        <Line Name="PrevLineHand" X1="14" Y1="12" X2="14" Y2="17" Stroke="#FF1E27" StrokeThickness="1.5"/>
+                                                        <Polygon Name="PrevPolyHand" Points="11,3 14,3 14,10 17,11 19,13 19,21 16,24 9,24 7,19 7,15 11,13" Fill="#050508" Stroke="#FF1E27" StrokeThickness="1.4" StrokeLineJoin="Round"/>
+                                                        <Line Name="PrevLineHand" X1="14" Y1="13" X2="14" Y2="18" Stroke="#FF1E27" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                                                     </Canvas>
                                                     <TextBlock Text="Link" Foreground="{DynamicResource Faint}" FontSize="8" HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                                 </StackPanel>
@@ -1966,9 +1967,10 @@ foreach ($fDir in $fontCandidates) {
                                             <Border Margin="4" Background="{DynamicResource Card}" CornerRadius="8" Padding="6">
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <Canvas Width="28" Height="28">
-                                                        <Line Name="PrevLineBeamTop" X1="8" Y1="5" X2="20" Y2="5" Stroke="#FF1E27" StrokeThickness="2.5"/>
-                                                        <Line Name="PrevLineBeamStem" X1="14" Y1="5" X2="14" Y2="23" Stroke="#FF1E27" StrokeThickness="2.5"/>
-                                                        <Line Name="PrevLineBeamBot" X1="8" Y1="23" X2="20" Y2="23" Stroke="#FF1E27" StrokeThickness="2.5"/>
+                                                        <Line Name="PrevLineBeamTop" X1="8" Y1="6" X2="20" Y2="6" Stroke="#FF1E27" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        <Line Name="PrevLineBeamStem" X1="14" Y1="6" X2="14" Y2="22" Stroke="#FF1E27" StrokeThickness="2"/>
+                                                        <Line Name="PrevLineBeamBot" X1="8" Y1="22" X2="20" Y2="22" Stroke="#FF1E27" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        <Rectangle Name="PrevRectBeamFill" Canvas.Left="13" Canvas.Top="9" Width="2" Height="10" Fill="#050508"/>
                                                     </Canvas>
                                                     <TextBlock Text="Texto" Foreground="{DynamicResource Faint}" FontSize="8" HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                                 </StackPanel>
@@ -2569,7 +2571,7 @@ foreach ($fDir in $fontCandidates) {
                                        FontFamily="{DynamicResource Heading}" FontSize="17" FontWeight="Bold" Foreground="#FFFFFF"
                                        HorizontalAlignment="Center" Margin="0,0,0,6"/>
 
-                            <TextBlock Name="TxtModalUpdateVersion" Text="v3.7.2 Pro"
+                            <TextBlock Name="TxtModalUpdateVersion" Text="v3.7.3 Pro"
                                        FontFamily="{DynamicResource Heading}" FontSize="13" Foreground="#FF1E27"
                                        HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
@@ -2815,6 +2817,7 @@ $prevPolyArrow          = $window.FindName("PrevPolyArrow")
 $prevPolyAppArrow       = $window.FindName("PrevPolyAppArrow")
 $prevEllAppBg           = $window.FindName("PrevEllAppBg")
 $prevEllAppDot          = $window.FindName("PrevEllAppDot")
+$prevPathAppArc         = $window.FindName("PrevPathAppArc")
 $prevEllWaitBg          = $window.FindName("PrevEllWaitBg")
 $prevPathWaitArc        = $window.FindName("PrevPathWaitArc")
 $prevEllWaitDot         = $window.FindName("PrevEllWaitDot")
@@ -2830,6 +2833,7 @@ $prevLineHand           = $window.FindName("PrevLineHand")
 $prevLineBeamTop        = $window.FindName("PrevLineBeamTop")
 $prevLineBeamStem       = $window.FindName("PrevLineBeamStem")
 $prevLineBeamBot        = $window.FindName("PrevLineBeamBot")
+$prevRectBeamFill       = $window.FindName("PrevRectBeamFill")
 
 # Botoes de Presets de Cursores
 $btnPresetCyberpunk     = $window.FindName("BtnPresetCyberpunk")
@@ -3173,8 +3177,8 @@ function Check-MathzUpdate([bool]$interactive = $false) {
             Log-Hud "Nova versao encontrada: $($json.version)!"
         } else {
             if ($interactive) {
-                Log-Hud "Voce ja esta com a versao mais recente instalada (v3.7.2 Pro)!"
-                [System.Windows.MessageBox]::Show("Voce ja esta utilizando a versao mais recente do Painel de Comando MTZ (v3.7.2 Pro).`n`nNenhuma atualizacao necessaria no momento.", "Painel de Comando MTZ", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information) | Out-Null
+                Log-Hud "Voce ja esta com a versao mais recente instalada (v3.7.3 Pro)!"
+                [System.Windows.MessageBox]::Show("Voce ja esta utilizando a versao mais recente do Painel de Comando MTZ (v3.7.3 Pro).`n`nNenhuma atualizacao necessaria no momento.", "Painel de Comando MTZ", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information) | Out-Null
             }
         }
     } catch {
@@ -6026,6 +6030,7 @@ function Update-CursorLivePreview([string]$inHex, [string]$outHex) {
         if ($prevPolyAppArrow) { $prevPolyAppArrow.Fill = $brIn; $prevPolyAppArrow.Stroke = $brOut }
         if ($prevEllAppBg)     { $prevEllAppBg.Fill = $brIn; $prevEllAppBg.Stroke = $brOut }
         if ($prevEllAppDot)    { $prevEllAppDot.Fill = $brOut }
+        if ($prevPathAppArc)   { $prevPathAppArc.Stroke = $brOut }
 
         if ($prevEllWaitBg)    { $prevEllWaitBg.Fill = $brIn; $prevEllWaitBg.Stroke = $brOut }
         if ($prevPathWaitArc)  { $prevPathWaitArc.Stroke = $brOut }
@@ -6044,6 +6049,7 @@ function Update-CursorLivePreview([string]$inHex, [string]$outHex) {
         if ($prevLineBeamTop)  { $prevLineBeamTop.Stroke = $brOut }
         if ($prevLineBeamStem) { $prevLineBeamStem.Stroke = $brOut }
         if ($prevLineBeamBot)  { $prevLineBeamBot.Stroke = $brOut }
+        if ($prevRectBeamFill) { $prevRectBeamFill.Fill = $brIn }
 
         if ($previewColorOutlineBadge) { $previewColorOutlineBadge.Background = $brOut }
         if ($previewColorInsideBadge)  { $previewColorInsideBadge.Background = $brIn }
@@ -6206,17 +6212,51 @@ if ($btnResetDefaultCursors) {
                 . $cg
                 Restore-MathzDefaultCursors | Out-Null
             } else {
+                $winDir = $env:SystemRoot
+                if (-not $winDir) { $winDir = "C:\Windows" }
+                $curDir = Join-Path $winDir "Cursors"
+
+                $defaultMap = [ordered]@{
+                    "Arrow"       = (Join-Path $curDir "aero_arrow.cur")
+                    "Help"        = (Join-Path $curDir "aero_helpsel.cur")
+                    "AppStarting" = (Join-Path $curDir "aero_working.ani")
+                    "Wait"        = (Join-Path $curDir "aero_busy.ani")
+                    "Crosshair"   = (Join-Path $curDir "cross_r.cur")
+                    "IBeam"       = (Join-Path $curDir "beam_r.cur")
+                    "NWPen"       = (Join-Path $curDir "aero_pen.cur")
+                    "No"          = (Join-Path $curDir "aero_unavail.cur")
+                    "SizeNS"      = (Join-Path $curDir "aero_ns.cur")
+                    "SizeWE"      = (Join-Path $curDir "aero_ew.cur")
+                    "SizeNWSE"    = (Join-Path $curDir "aero_nwse.cur")
+                    "SizeNESW"    = (Join-Path $curDir "aero_nesw.cur")
+                    "SizeAll"     = (Join-Path $curDir "aero_move.cur")
+                    "UpArrow"     = (Join-Path $curDir "aero_up.cur")
+                    "Hand"        = (Join-Path $curDir "aero_link.cur")
+                    "Pin"         = (Join-Path $curDir "aero_pin.cur")
+                    "Person"      = (Join-Path $curDir "aero_person.cur")
+                }
+
                 $curRegPath = "HKCU:\Control Panel\Cursors"
                 if (-not (Test-Path $curRegPath)) { New-Item -Path $curRegPath -Force | Out-Null }
                 Set-ItemProperty -Path $curRegPath -Name "(Default)" -Value "Windows Default" -Force
-                $roles = @("Arrow","Help","AppStarting","Wait","Crosshair","IBeam","NWPen","No","SizeNS","SizeWE","SizeNWSE","SizeNESW","SizeAll","UpArrow","Hand","Pin","Person")
-                foreach ($r in $roles) {
-                    Set-ItemProperty -Path $curRegPath -Name $r -Value "" -Force
+                Set-ItemProperty -Path $curRegPath -Name "Scheme Source" -Value 2 -Type DWord -Force
+
+                foreach ($role in $defaultMap.Keys) {
+                    $p = $defaultMap[$role]
+                    if (Test-Path $p) {
+                        Set-ItemProperty -Path $curRegPath -Name $role -Value $p -Force
+                    } else {
+                        Set-ItemProperty -Path $curRegPath -Name $role -Value "" -Force
+                    }
+                }
+
+                if ([System.Management.Automation.PSTypeName]'WinCursorAPI'.Type) {
+                    [WinCursorAPI]::RestoreLive()
                 }
             }
             Update-CursorLivePreview "#050508" "#FF1E27"
             Update-MathzTweaksChecklist
-            Log-Hud "Cursores padro de fábrica do Windows restaurados com sucesso!"
+            Log-Hud "Cursores padrao originais do Windows restaurados com sucesso!"
         } catch {
             Log-Hud "Erro ao restaurar cursores: $_"
         }

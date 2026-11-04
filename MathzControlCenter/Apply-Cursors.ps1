@@ -91,15 +91,46 @@ if (-not ([System.Management.Automation.PSTypeName]'WinCursorAPI').Type) {
         }
 
         public static void RestoreLive() {
-            try {
-                SystemParametersInfo(SPI_SETCURSORS, 0, IntPtr.Zero, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
-            } catch { }
+                string winDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+                string curDir = System.IO.Path.Combine(winDir, "Cursors");
 
-            try {
-                IntPtr res;
-                SendMessageTimeout((IntPtr)HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, "Cursors", SMTO_ABORTIFHUNG, 2000, out res);
-            } catch { }
-        }
+                var defaultMapping = new System.Collections.Generic.Dictionary<string, uint> {
+                    { "aero_arrow.cur",    OCR_NORMAL },
+                    { "beam_r.cur",        OCR_IBEAM },
+                    { "aero_busy.ani",     OCR_WAIT },
+                    { "cross_r.cur",       OCR_CROSS },
+                    { "aero_up.cur",       OCR_UP },
+                    { "aero_nwse.cur",     OCR_SIZENWSE },
+                    { "aero_nesw.cur",     OCR_SIZENESW },
+                    { "aero_ew.cur",       OCR_SIZEWE },
+                    { "aero_ns.cur",       OCR_SIZENS },
+                    { "aero_move.cur",     OCR_SIZEALL },
+                    { "aero_unavail.cur",  OCR_NO },
+                    { "aero_link.cur",     OCR_HAND },
+                    { "aero_working.ani",  OCR_APPSTARTING }
+                };
+
+                foreach (var kvp in defaultMapping) {
+                    try {
+                        string curFile = System.IO.Path.Combine(curDir, kvp.Key);
+                        if (System.IO.File.Exists(curFile)) {
+                            IntPtr h = LoadCursorFromFile(curFile);
+                            if (h != IntPtr.Zero) {
+                                SetSystemCursor(h, kvp.Value);
+                            }
+                        }
+                    } catch { }
+                }
+
+                try {
+                    SystemParametersInfo(SPI_SETCURSORS, 0, IntPtr.Zero, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+                } catch { }
+
+                try {
+                    IntPtr res;
+                    SendMessageTimeout((IntPtr)HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, "Cursors", SMTO_ABORTIFHUNG, 2000, out res);
+                } catch { }
+            }
     }
 '@
     Add-Type -TypeDefinition $csharp -ErrorAction SilentlyContinue
@@ -108,13 +139,44 @@ if (-not ([System.Management.Automation.PSTypeName]'WinCursorAPI').Type) {
 $cursorSystemDir = "C:\Windows\Cursors\MathzPerformance"
 
 if ($RestoreDefault) {
+    $winDir = $env:SystemRoot
+    if (-not $winDir) { $winDir = "C:\Windows" }
+    $curDir = Join-Path $winDir "Cursors"
+
+    $defaultMap = [ordered]@{
+        "Arrow"       = (Join-Path $curDir "aero_arrow.cur")
+        "Help"        = (Join-Path $curDir "aero_helpsel.cur")
+        "AppStarting" = (Join-Path $curDir "aero_working.ani")
+        "Wait"        = (Join-Path $curDir "aero_busy.ani")
+        "Crosshair"   = (Join-Path $curDir "cross_r.cur")
+        "IBeam"       = (Join-Path $curDir "beam_r.cur")
+        "NWPen"       = (Join-Path $curDir "aero_pen.cur")
+        "No"          = (Join-Path $curDir "aero_unavail.cur")
+        "SizeNS"      = (Join-Path $curDir "aero_ns.cur")
+        "SizeWE"      = (Join-Path $curDir "aero_ew.cur")
+        "SizeNWSE"    = (Join-Path $curDir "aero_nwse.cur")
+        "SizeNESW"    = (Join-Path $curDir "aero_nesw.cur")
+        "SizeAll"     = (Join-Path $curDir "aero_move.cur")
+        "UpArrow"     = (Join-Path $curDir "aero_up.cur")
+        "Hand"        = (Join-Path $curDir "aero_link.cur")
+        "Pin"         = (Join-Path $curDir "aero_pin.cur")
+        "Person"      = (Join-Path $curDir "aero_person.cur")
+    }
+
     $curRegPath = "HKCU:\Control Panel\Cursors"
     if (-not (Test-Path $curRegPath)) { New-Item -Path $curRegPath -Force | Out-Null }
     Set-ItemProperty -Path $curRegPath -Name "(Default)" -Value "Windows Default" -Force
-    $roles = @("Arrow","Help","AppStarting","Wait","Crosshair","IBeam","NWPen","No","SizeNS","SizeWE","SizeNWSE","SizeNESW","SizeAll","UpArrow","Hand","Pin","Person")
-    foreach ($r in $roles) {
-        Set-ItemProperty -Path $curRegPath -Name $r -Value "" -Force
+    Set-ItemProperty -Path $curRegPath -Name "Scheme Source" -Value 2 -Type DWord -Force
+
+    foreach ($role in $defaultMap.Keys) {
+        $p = $defaultMap[$role]
+        if (Test-Path $p) {
+            Set-ItemProperty -Path $curRegPath -Name $role -Value $p -Force
+        } else {
+            Set-ItemProperty -Path $curRegPath -Name $role -Value "" -Force
+        }
     }
+
     [WinCursorAPI]::RestoreLive()
     return
 }

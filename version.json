@@ -1,14 +1,14 @@
-﻿{
-    "version":  "3.7.2",
-    "versionCode":  372,
-    "releaseDate":  "2026-11-03",
-    "title":  "Mathz Control Panel v3.7.2 Pro",
+{
+    "version":  "3.7.3",
+    "versionCode":  373,
+    "releaseDate":  "2026-11-04",
+    "title":  "Mathz Control Panel v3.7.3 Pro",
     "changelog":  [
-                      "CrystalDiskMark e CrystalDiskInfo agora integrados diretamente como abas na barra lateral de navegacao",
-                      "Acesso rapido de 1-clique a testes de velocidade Direct I/O e telemetria de saude S.M.A.R.T.",
-                      "Correcao critica da area de tolerancia do clique duplo (4x4 px) e SPI_SETMOUSE",
-                      "Monitoramento de temperatura em tempo real de CPU, Placa de Video e SSDs NVMe/SATA",
-                      "Interface 100% vetorial com DPI Awareness 4K UHD nativo"
+                      "Correcao da pre-visualizacao de cursores: vetores e formatos 100% fieis aos cursores gerados (seta gamer de precisao, radar ocupado, aguarde, mira, link e texto)",
+                      "Correcao do botao 'Restaurar Original': recuperacao instantanea dos cursores padrao Aero do Windows em memoria RAM (User32 SetSystemCursor) e registro sem necessidade de reiniciar",
+                      "CrystalDiskMark e CrystalDiskInfo fixados diretamente na barra lateral com testes Direct I/O e telemetria S.M.A.R.T.",
+                      "Protecao e calibracao nativa de clique duplo 1:1 na Area de Trabalho e pastas",
+                      "Monitoramento de temperatura em tempo real de CPU, Placa de Video e SSDs"
                   ],
     "downloadUrl":  "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe",
     "zipUrl":  "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel-v3.0.zip",
