@@ -2282,11 +2282,11 @@ foreach ($fDir in $fontCandidates) {
                                            Foreground="#FF1E27" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
 
-                            <TextBlock Name="TxtModalUpdateTitle" Text="NOVA VERSÃƒO DISPONÃVEL"
+                            <TextBlock Name="TxtModalUpdateTitle" Text="NOVA VERSAO DISPONIVEL"
                                        FontFamily="{DynamicResource Heading}" FontSize="17" FontWeight="Bold" Foreground="#FFFFFF"
                                        HorizontalAlignment="Center" Margin="0,0,0,6"/>
 
-                                <TextBlock Text="v3.7.1 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
+                            <TextBlock Name="TxtModalUpdateVersion" Text="v3.7.1 Pro"
                                        FontFamily="{DynamicResource Heading}" FontSize="13" Foreground="#FF1E27"
                                        HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
