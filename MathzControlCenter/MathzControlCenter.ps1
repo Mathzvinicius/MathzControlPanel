@@ -700,7 +700,7 @@ foreach ($fDir in $fontCandidates) {
                             <ProgressBar Name="PbRam" Height="3" Background="{DynamicResource Line}" Foreground="#FFFFFF" BorderThickness="0" Value="0" Margin="0,2,0,5"/>
 
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                <TextBlock Text="v3.7.1 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
+                                <TextBlock Text="v3.7.2 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
                                 <Button Name="BtnCheckUpdates" Style="{StaticResource OutlineButton}" Content="VERIFICAR ATUALIZAR" FontSize="8.5" Padding="6,2" Margin="6,0,0,0" ToolTip="Verificar novas versoes no servidor oficial"/>
                             </StackPanel>
                         </StackPanel>
@@ -756,6 +756,24 @@ foreach ($fDir in $fontCandidates) {
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE896;" FontFamily="{StaticResource Icons}" FontSize="14" Width="26" VerticalAlignment="Center"/>
                                     <TextBlock Text="Drivers (WHQL)" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <TextBlock Text="ARMAZENAMENTO &amp; DISCOS" Foreground="{DynamicResource Faint}" FontSize="11" FontWeight="Bold" Margin="16,12,0,6"/>
+
+                            <!-- 7. CrystalDiskMark -->
+                            <Button Name="BtnTabDiskMark" Style="{StaticResource NavItem}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="14" Width="26" VerticalAlignment="Center" Foreground="#00E5FF"/>
+                                    <TextBlock Text="CrystalDiskMark" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- 8. CrystalDiskInfo -->
+                            <Button Name="BtnTabDiskInfo" Style="{StaticResource NavItem}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource Icons}" FontSize="14" Width="26" VerticalAlignment="Center" Foreground="#00FF66"/>
+                                    <TextBlock Text="CrystalDiskInfo" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
 
@@ -2145,6 +2163,271 @@ foreach ($fDir in $fontCandidates) {
                         </Border>
                     </Grid>
 
+                    <!-- ===================================================================== -->
+                    <!-- PAGINA 9: SUITE DE ARMAZENAMENTO (CRYSTALDISKMARK & CRYSTALDISKINFO)  -->
+                    <!-- ===================================================================== -->
+                    <Grid Name="ViewDisks" Visibility="Collapsed">
+                        <Border Style="{StaticResource CardBorder}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- 1. Header com Titulo e Botoes de Sub-Aba -->
+                                <Grid Grid.Row="0" Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="&#xEDA2;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="#FF1E27" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <TextBlock Text="SU&#x00CD;TE DE ARMAZENAMENTO &amp; DISCOS" Foreground="{DynamicResource Fg}" FontSize="13" FontWeight="SemiBold"/>
+                                            <Border Background="{DynamicResource Hover}" BorderThickness="1" BorderBrush="{DynamicResource LineStrong}" CornerRadius="4" Padding="6,1" Margin="8,0,0,0">
+                                                <TextBlock Text="DIRECT I/O + S.M.A.R.T." Foreground="{DynamicResource Fg}" FontSize="8.5" FontWeight="Bold"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="Testes reais de taxa de transfer&#x00EA;ncia (Direct I/O) e diagn&#x00F3;stico avan&#x00E7;ado de sa&#x00FA;de e desgaste." Foreground="{DynamicResource Muted}" FontSize="11.5" Margin="0,3,0,0"/>
+                                    </StackPanel>
+
+                                    <!-- Alternador de Abas Internas (Pills) -->
+                                    <Border Grid.Column="1" Background="#0C0C0E" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="3">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Name="BtnDiskTabMark" Style="{StaticResource GraphPillButton}" Content="&#xE768; CRYSTALDISKMARK" FontWeight="Bold" Padding="14,5" FontSize="10.5"/>
+                                            <Button Name="BtnDiskTabInfo" Style="{StaticResource GraphPillButton}" Content="&#xE9D9; CRYSTALDISKINFO" FontWeight="Bold" Padding="14,5" FontSize="10.5" Margin="4,0,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <!-- 2. CONTEUDO DA ABA 1: CRYSTALDISKMARK -->
+                                <Grid Name="PanelDiskMarkView" Grid.Row="1" Visibility="Visible">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Barra de Controles do Benchmark -->
+                                    <Border Grid.Row="0" Background="#121216" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,12">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="20"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Unidade -->
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="UNIDADE:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <ComboBox Name="ComboBenchDrive" Width="170" Height="28" Background="#0C0C0E" Foreground="#FFFFFF" BorderBrush="{DynamicResource Line}" FontSize="10.5"/>
+                                            </StackPanel>
+
+                                            <!-- Tamanho do Teste -->
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="TAMANHO DO ARQUIVO:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <Border Background="#0C0C0E" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="2">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Button Name="BtnBenchSize64"  Style="{StaticResource GraphPillButton}" Content="64 MB" Padding="10,3" FontSize="9.5"/>
+                                                        <Button Name="BtnBenchSize128" Style="{StaticResource GraphPillButton}" Content="128 MB" Padding="10,3" FontSize="9.5"/>
+                                                        <Button Name="BtnBenchSize256" Style="{StaticResource GraphPillButton}" Content="256 MB" Padding="10,3" FontSize="9.5"/>
+                                                        <Button Name="BtnBenchSize512" Style="{StaticResource GraphPillButton}" Content="512 MB" Padding="10,3" FontSize="9.5"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+
+                                            <!-- Botoes de Acao -->
+                                            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Name="BtnStartDiskBench" Style="{StaticResource PrimaryButton}" Padding="18,7" VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="INICIAR BENCHMARK" FontSize="11" FontWeight="Bold"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Barra de Progresso e Status -->
+                                    <Border Grid.Row="1" Background="#0A0A0C" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,14">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="5"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid Grid.Row="0" Margin="0,0,0,6">
+                                                <TextBlock Name="TxtBenchStatus" Text="Pronto para testar. Selecione a unidade e clique em Iniciar." FontSize="11" Foreground="{DynamicResource Fg}" FontWeight="SemiBold"/>
+                                                <TextBlock Name="TxtBenchPct" Text="0%" FontSize="11" Foreground="#FF1E27" FontWeight="Bold" HorizontalAlignment="Right" FontFamily="{StaticResource Mono}"/>
+                                            </Grid>
+                                            <ProgressBar Grid.Row="1" Name="PbBenchProgress" Style="{StaticResource MiniProgress}" Value="0" Maximum="100"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Grade com os 4 Resultados Oficiais no Estilo CrystalDiskMark -->
+                                    <Grid Grid.Row="2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="14"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="14"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- 1. Leitura Sequencial -->
+                                        <Border Grid.Row="0" Grid.Column="0" Background="#121216" BorderBrush="#3300E5FF" BorderThickness="1" CornerRadius="12" Padding="18,14">
+                                            <Grid>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="SEQ 1M Q8T1 LEITURA" FontSize="11" FontWeight="Bold" Foreground="#00E5FF"/>
+                                                    <TextBlock Text="Velocidade sequencial de leitura cont&#x00ED;nua (Direct I/O)" FontSize="9.5" Foreground="{DynamicResource Faint}" Margin="0,2,0,0"/>
+                                                </StackPanel>
+                                                <TextBlock Name="TxtBenchSeqRead" Text="-- MB/s" FontSize="34" FontWeight="Bold" Foreground="#00E5FF" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- 2. Escrita Sequencial -->
+                                        <Border Grid.Row="0" Grid.Column="2" Background="#121216" BorderBrush="#33FF1E27" BorderThickness="1" CornerRadius="12" Padding="18,14">
+                                            <Grid>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="SEQ 1M Q8T1 ESCRITA" FontSize="11" FontWeight="Bold" Foreground="#FF1E27"/>
+                                                    <TextBlock Text="Velocidade sequencial de grava&#x00E7;&#x00E3;o no disco (Direct I/O)" FontSize="9.5" Foreground="{DynamicResource Faint}" Margin="0,2,0,0"/>
+                                                </StackPanel>
+                                                <TextBlock Name="TxtBenchSeqWrite" Text="-- MB/s" FontSize="34" FontWeight="Bold" Foreground="#FF1E27" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- 3. Leitura Aleatoria 4K -->
+                                        <Border Grid.Row="2" Grid.Column="0" Background="#121216" BorderBrush="#3300FF66" BorderThickness="1" CornerRadius="12" Padding="18,14">
+                                            <Grid>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="RND 4K Q1T1 LEITURA" FontSize="11" FontWeight="Bold" Foreground="#00FF66"/>
+                                                    <TextBlock Name="TxtBenchRandReadIops" Text="-- IOPS (Abertura de programas e SO)" FontSize="9.5" Foreground="{DynamicResource Faint}" Margin="0,2,0,0"/>
+                                                </StackPanel>
+                                                <TextBlock Name="TxtBenchRandRead" Text="-- MB/s" FontSize="32" FontWeight="Bold" Foreground="#00FF66" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- 4. Escrita Aleatoria 4K -->
+                                        <Border Grid.Row="2" Grid.Column="2" Background="#121216" BorderBrush="#33FFAA00" BorderThickness="1" CornerRadius="12" Padding="18,14">
+                                            <Grid>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="RND 4K Q1T1 ESCRITA" FontSize="11" FontWeight="Bold" Foreground="#FFAA00"/>
+                                                    <TextBlock Name="TxtBenchRandWriteIops" Text="-- IOPS (Grava&#x00E7;&#x00E3;o de pequenos arquivos)" FontSize="9.5" Foreground="{DynamicResource Faint}" Margin="0,2,0,0"/>
+                                                </StackPanel>
+                                                <TextBlock Name="TxtBenchRandWrite" Text="-- MB/s" FontSize="32" FontWeight="Bold" Foreground="#FFAA00" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+                                </Grid>
+
+                                <!-- 3. CONTEUDO DA ABA 2: CRYSTALDISKINFO -->
+                                <Grid Name="PanelDiskInfoView" Grid.Row="1" Visibility="Collapsed">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Seletor do Disco e Acoes -->
+                                    <Border Grid.Row="0" Background="#121216" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,12">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="DISCO F&#x00CD;SICO:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <ComboBox Name="ComboInfoDrive" Width="400" Height="28" Background="#0C0C0E" Foreground="#FFFFFF" BorderBrush="{DynamicResource Line}" FontSize="10.5"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Name="BtnInfoRefresh" Style="{StaticResource OutlineButton}" Padding="12,6" Margin="0,0,8,0">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE72C;" FontFamily="{StaticResource Icons}" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="ATUALIZAR S.M.A.R.T." FontSize="10.5" FontWeight="Bold"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Name="BtnInfoExport" Style="{StaticResource OutlineButton}" Padding="12,6">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE74E;" FontFamily="{StaticResource Icons}" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="EXPORTAR RELAT&#x00D3;RIO" FontSize="10.5" FontWeight="Bold"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Ficha Tecnica S.M.A.R.T. -->
+                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="320"/>
+                                                <ColumnDefinition Width="14"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Cartao de Saude e Temperatura -->
+                                            <Border Grid.Column="0" Background="#101014" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="16,14">
+                                                <StackPanel>
+                                                    <!-- Selo de Saude -->
+                                                    <Border Background="#1200FF66" BorderBrush="#4400FF66" BorderThickness="1" CornerRadius="10" Padding="14,12" Margin="0,0,0,12">
+                                                        <StackPanel HorizontalAlignment="Center">
+                                                            <TextBlock Text="ESTADO DE SA&#x00DA;DE S.M.A.R.T." FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Muted}" HorizontalAlignment="Center"/>
+                                                            <TextBlock Name="TxtInfoHealthVerdict" Text="100% SAUD&#x00C1;VEL" FontSize="22" FontWeight="Bold" Foreground="#00FF66" HorizontalAlignment="Center" Margin="0,4,0,0" FontFamily="{DynamicResource Heading}"/>
+                                                            <TextBlock Name="TxtInfoHealthStatusSub" Text="Nenhum setor defeituoso detectado" FontSize="9.5" Foreground="{DynamicResource Faint}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                                        </StackPanel>
+                                                    </Border>
+
+                                                    <!-- Selo de Temperatura -->
+                                                    <Border Background="#1200E5FF" BorderBrush="#3300E5FF" BorderThickness="1" CornerRadius="10" Padding="14,12" Margin="0,0,0,12">
+                                                        <StackPanel HorizontalAlignment="Center">
+                                                            <TextBlock Text="TEMPERATURA OPERACIONAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Muted}" HorizontalAlignment="Center"/>
+                                                            <TextBlock Name="TxtInfoTemp" Text="-- &#x00B0;C" FontSize="26" FontWeight="Bold" Foreground="#00E5FF" HorizontalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
+                                                            <TextBlock Name="TxtInfoTempMax" Text="Pico t&#x00E9;rmico registrado: -- &#x00B0;C" FontSize="9.5" Foreground="{DynamicResource Faint}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                                        </StackPanel>
+                                                    </Border>
+
+                                                    <!-- Desgaste / Vida Util -->
+                                                    <Border Background="#121216" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="10" Padding="14,12">
+                                                        <StackPanel>
+                                                            <Grid Margin="0,0,0,6">
+                                                                <TextBlock Text="VIDA &#x00DA;TIL RESTANTE" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Muted}"/>
+                                                                <TextBlock Name="TxtInfoLifePct" Text="100%" FontSize="10.5" FontWeight="Bold" Foreground="#00FF66" HorizontalAlignment="Right"/>
+                                                            </Grid>
+                                                            <ProgressBar Name="PbInfoLife" Style="{StaticResource MiniProgress}" Value="100" Height="6" Foreground="#00FF66"/>
+                                                            <TextBlock Name="TxtInfoWear" Text="Desgaste de c&#x00E9;lulas de mem&#x00F3;ria: 0%" FontSize="9" Foreground="{DynamicResource Faint}" Margin="0,6,0,0"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Border>
+
+                                            <!-- Detalhamento de Parametros Tecnicos (Tabela) -->
+                                            <Border Grid.Column="2" Background="#101014" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="16,14">
+                                                <StackPanel Name="PanelInfoParameters">
+                                                    <TextBlock Text="ESPECIFICA&#x00C7;&#x00D5;ES T&#x00C9;CNICAS E CONFIABILIDADE S.M.A.R.T.:" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Muted}" Margin="0,0,0,10"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </ScrollViewer>
+                                </Grid>
+
+                                <!-- 4. Rodape com Links Oficiais -->
+                                <Border Grid.Row="2" Margin="0,12,0,0">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="* Utilit&#x00E1;rios oficiais Crystal Dew World:" FontSize="9.5" Foreground="{DynamicResource Faint}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <Button Name="BtnDownloadCrystalInfo" Style="{StaticResource OutlineButton}" Content="Baixar CrystalDiskInfo Oficial" FontSize="9" Padding="8,3" Margin="0,0,6,0"/>
+                                        <Button Name="BtnDownloadCrystalMark" Style="{StaticResource OutlineButton}" Content="Baixar CrystalDiskMark Oficial" FontSize="9" Padding="8,3"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
                 </Grid>
 
                 <!-- RODAP&#x00C9; DE STATUS -->
@@ -2286,7 +2569,7 @@ foreach ($fDir in $fontCandidates) {
                                        FontFamily="{DynamicResource Heading}" FontSize="17" FontWeight="Bold" Foreground="#FFFFFF"
                                        HorizontalAlignment="Center" Margin="0,0,0,6"/>
 
-                            <TextBlock Name="TxtModalUpdateVersion" Text="v3.7.1 Pro"
+                            <TextBlock Name="TxtModalUpdateVersion" Text="v3.7.2 Pro"
                                        FontFamily="{DynamicResource Heading}" FontSize="13" Foreground="#FF1E27"
                                        HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
@@ -2305,266 +2588,6 @@ foreach ($fDir in $fontCandidates) {
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
-                </Border>
-
-                <!-- CARD FLUTUANTE DA SUITE DE ARMAZENAMENTO (CRYSTALDISKMARK & CRYSTALDISKINFO) -->
-                <Border Name="CardModalDiskSuite" Width="760" MaxHeight="560" HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Background="#0E0E12" BorderBrush="#FF1E27" BorderThickness="1.5" CornerRadius="16"
-                        Padding="24,20" Visibility="Collapsed" Opacity="0" RenderTransformOrigin="0.5,0.5">
-                    <Border.Effect>
-                        <DropShadowEffect Color="#FF1E27" BlurRadius="45" ShadowDepth="0" Opacity="0.35"/>
-                    </Border.Effect>
-                    <Border.RenderTransform>
-                        <ScaleTransform x:Name="DiskModalCardScale" ScaleX="0.9" ScaleY="0.9"/>
-                    </Border.RenderTransform>
-
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <!-- 1. Header do Modal -->
-                        <Grid Grid.Row="0" Margin="0,0,0,14">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Border Width="34" Height="34" CornerRadius="8" Background="#181820" BorderBrush="#33FF1E27" BorderThickness="1" Margin="0,0,10,0">
-                                    <TextBlock Text="&#xEDA2;" FontFamily="{StaticResource Icons}" FontSize="18" Foreground="#FF1E27" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="CENTRAL DE ARMAZENAMENTO &amp; DISCOS" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" FontFamily="{DynamicResource Heading}"/>
-                                    <TextBlock Text="SU&#x00CD;TE S.M.A.R.T. (CRYSTALDISKINFO) &amp; BENCHMARK DIRECT I/O (CRYSTALDISKMARK)" FontSize="9" Foreground="{DynamicResource Faint}"/>
-                                </StackPanel>
-                            </StackPanel>
-
-                            <!-- Botao Fechar [X] -->
-                            <Button Name="BtnCloseDiskSuite" Style="{StaticResource OutlineButton}" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                <TextBlock Text="&#xE711;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="#AAAAAA"/>
-                            </Button>
-                        </Grid>
-
-                        <!-- 2. Barra de Abas do Modal -->
-                        <Border Grid.Row="1" Background="#08080A" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="3" Margin="0,0,0,14">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Button Grid.Column="0" Name="BtnDiskTabMark" Style="{StaticResource GraphPillButton}" Content="&#xE768; CRYSTALDISKMARK (TESTE DE VELOCIDADE)" FontWeight="Bold" Height="30"/>
-                                <Button Grid.Column="1" Name="BtnDiskTabInfo" Style="{StaticResource GraphPillButton}" Content="&#xE9D9; CRYSTALDISKINFO (SA&#x00DA;DE S.M.A.R.T.)" FontWeight="Bold" Height="30"/>
-                            </Grid>
-                        </Border>
-
-                        <!-- 3. CONTEUDO DA ABA 1: CRYSTALDISKMARK -->
-                        <Grid Name="PanelDiskMarkView" Grid.Row="2" Visibility="Visible">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- Controles do Benchmark -->
-                            <Border Grid.Row="0" Background="#121216" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,12">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <!-- Unidade -->
-                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="UNIDADE:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <ComboBox Name="ComboBenchDrive" Width="130" Height="26" Background="#0C0C0E" Foreground="#FFFFFF" BorderBrush="{DynamicResource Line}" FontSize="10.5"/>
-                                    </StackPanel>
-
-                                    <!-- Tamanho do Teste -->
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="TAMANHO:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <Border Background="#0C0C0E" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="2">
-                                            <StackPanel Orientation="Horizontal">
-                                                <Button Name="BtnBenchSize64"  Style="{StaticResource GraphPillButton}" Content="64 MB" Padding="8,2" FontSize="9"/>
-                                                <Button Name="BtnBenchSize128" Style="{StaticResource GraphPillButton}" Content="128 MB" Padding="8,2" FontSize="9"/>
-                                                <Button Name="BtnBenchSize256" Style="{StaticResource GraphPillButton}" Content="256 MB" Padding="8,2" FontSize="9"/>
-                                                <Button Name="BtnBenchSize512" Style="{StaticResource GraphPillButton}" Content="512 MB" Padding="8,2" FontSize="9"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-
-                                    <!-- Botao Iniciar -->
-                                    <Button Grid.Column="4" Name="BtnStartDiskBench" Style="{StaticResource PrimaryButton}" Padding="16,6" VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                            <TextBlock Text="INICIAR BENCHMARK" FontSize="11" FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </Button>
-                                </Grid>
-                            </Border>
-
-                            <!-- Barra de Progresso e Status -->
-                            <Border Grid.Row="1" Background="#0A0A0C" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="10,6" Margin="0,0,0,12">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="4"/>
-                                    </Grid.RowDefinitions>
-                                    <Grid Grid.Row="0" Margin="0,0,0,5">
-                                        <TextBlock Name="TxtBenchStatus" Text="Pronto para testar. Selecione a unidade e clique em Iniciar." FontSize="10" Foreground="{DynamicResource Fg}" FontWeight="SemiBold"/>
-                                        <TextBlock Name="TxtBenchPct" Text="0%" FontSize="10" Foreground="#FF1E27" FontWeight="Bold" HorizontalAlignment="Right" FontFamily="{StaticResource Mono}"/>
-                                    </Grid>
-                                    <ProgressBar Grid.Row="1" Name="PbBenchProgress" Style="{StaticResource MiniProgress}" Value="0" Maximum="100"/>
-                                </Grid>
-                            </Border>
-
-                            <!-- Grade com os 4 Resultados Oficiais no Estilo CrystalDiskMark -->
-                            <Grid Grid.Row="2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="10"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="10"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-
-                                <!-- 1. Leitura Sequencial -->
-                                <Border Grid.Row="0" Grid.Column="0" Background="#121216" BorderBrush="#3300E5FF" BorderThickness="1" CornerRadius="10" Padding="14,10">
-                                    <Grid>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="SEQ 1M Q8T1 LEITURA" FontSize="9.5" FontWeight="Bold" Foreground="#00E5FF"/>
-                                            <TextBlock Text="Velocidade sequencial de leitura cont&#x00ED;nua" FontSize="8.5" Foreground="{DynamicResource Faint}"/>
-                                        </StackPanel>
-                                        <TextBlock Name="TxtBenchSeqRead" Text="-- MB/s" FontSize="26" FontWeight="Bold" Foreground="#00E5FF" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
-                                    </Grid>
-                                </Border>
-
-                                <!-- 2. Escrita Sequencial -->
-                                <Border Grid.Row="0" Grid.Column="2" Background="#121216" BorderBrush="#33FF1E27" BorderThickness="1" CornerRadius="10" Padding="14,10">
-                                    <Grid>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="SEQ 1M Q8T1 ESCRITA" FontSize="9.5" FontWeight="Bold" Foreground="#FF1E27"/>
-                                            <TextBlock Text="Velocidade sequencial de grava&#x00E7;&#x00E3;o no disco" FontSize="8.5" Foreground="{DynamicResource Faint}"/>
-                                        </StackPanel>
-                                        <TextBlock Name="TxtBenchSeqWrite" Text="-- MB/s" FontSize="26" FontWeight="Bold" Foreground="#FF1E27" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
-                                    </Grid>
-                                </Border>
-
-                                <!-- 3. Leitura Aleatoria 4K -->
-                                <Border Grid.Row="2" Grid.Column="0" Background="#121216" BorderBrush="#3300FF66" BorderThickness="1" CornerRadius="10" Padding="14,10">
-                                    <Grid>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="RND 4K Q1T1 LEITURA" FontSize="9.5" FontWeight="Bold" Foreground="#00FF66"/>
-                                            <TextBlock Name="TxtBenchRandReadIops" Text="-- IOPS (Abertura de programas e SO)" FontSize="8.5" Foreground="{DynamicResource Faint}"/>
-                                        </StackPanel>
-                                        <TextBlock Name="TxtBenchRandRead" Text="-- MB/s" FontSize="24" FontWeight="Bold" Foreground="#00FF66" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
-                                    </Grid>
-                                </Border>
-
-                                <!-- 4. Escrita Aleatoria 4K -->
-                                <Border Grid.Row="2" Grid.Column="2" Background="#121216" BorderBrush="#33FFAA00" BorderThickness="1" CornerRadius="10" Padding="14,10">
-                                    <Grid>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="RND 4K Q1T1 ESCRITA" FontSize="9.5" FontWeight="Bold" Foreground="#FFAA00"/>
-                                            <TextBlock Name="TxtBenchRandWriteIops" Text="-- IOPS (Grava&#x00E7;&#x00E3;o de pequenos arquivos)" FontSize="8.5" Foreground="{DynamicResource Faint}"/>
-                                        </StackPanel>
-                                        <TextBlock Name="TxtBenchRandWrite" Text="-- MB/s" FontSize="24" FontWeight="Bold" Foreground="#FFAA00" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource Heading}"/>
-                                    </Grid>
-                                </Border>
-                            </Grid>
-                        </Grid>
-
-                        <!-- 4. CONTEUDO DA ABA 2: CRYSTALDISKINFO -->
-                        <Grid Name="PanelDiskInfoView" Grid.Row="2" Visibility="Collapsed">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- Seletor do Disco -->
-                            <Border Grid.Row="0" Background="#121216" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="10" Padding="12,8" Margin="0,0,0,10">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="DISCO SELECIONADO:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                    <ComboBox Grid.Column="1" Name="ComboInfoDrive" Height="26" Background="#0C0C0E" Foreground="#FFFFFF" BorderBrush="{DynamicResource Line}" FontSize="10.5"/>
-                                    <Button Grid.Column="2" Name="BtnExportDiskReport" Style="{StaticResource OutlineButton}" Content="&#xEDE2; EXPORTAR RELAT&#x00D3;RIO TXT" FontSize="9" Padding="8,4" Margin="10,0,0,0"/>
-                                </Grid>
-                            </Border>
-
-                            <!-- Ficha Tecnica S.M.A.R.T. -->
-                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="1.2*"/>
-                                        <ColumnDefinition Width="10"/>
-                                        <ColumnDefinition Width="1.8*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <!-- Cartao de Saude e Temperatura -->
-                                    <Border Grid.Column="0" Background="#101014" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="14,12">
-                                        <StackPanel>
-                                            <!-- Selo de Saude -->
-                                            <Border Background="#1200FF66" BorderBrush="#4400FF66" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,0,10">
-                                                <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="ESTADO DE SA&#x00DA;DE S.M.A.R.T." FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource Muted}" HorizontalAlignment="Center"/>
-                                                    <TextBlock Name="TxtInfoHealthVerdict" Text="100% SAUD&#x00C1;VEL" FontSize="18" FontWeight="Bold" Foreground="#00FF66" HorizontalAlignment="Center" Margin="0,2,0,0"/>
-                                                    <TextBlock Name="TxtInfoHealthStatusSub" Text="Nenhum setor defeituoso" FontSize="9" Foreground="{DynamicResource Faint}" HorizontalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Border>
-
-                                            <!-- Selo de Temperatura -->
-                                            <Border Background="#1200E5FF" BorderBrush="#3300E5FF" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,0,10">
-                                                <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="TEMPERATURA ATUAL" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource Muted}" HorizontalAlignment="Center"/>
-                                                    <TextBlock Name="TxtInfoTemp" Text="-- &#x00B0;C" FontSize="20" FontWeight="Bold" Foreground="#00E5FF" HorizontalAlignment="Center"/>
-                                                    <TextBlock Name="TxtInfoTempMax" Text="Pico registrado: -- &#x00B0;C" FontSize="8.5" Foreground="{DynamicResource Faint}" HorizontalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Border>
-
-                                            <!-- Desgaste / Vida Util -->
-                                            <Border Background="#121216" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="10,8">
-                                                <StackPanel>
-                                                    <Grid Margin="0,0,0,4">
-                                                        <TextBlock Text="VIDA &#x00DA;TIL RESTANTE" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource Muted}"/>
-                                                        <TextBlock Name="TxtInfoLifePct" Text="100%" FontSize="9.5" FontWeight="Bold" Foreground="#00FF66" HorizontalAlignment="Right"/>
-                                                    </Grid>
-                                                    <ProgressBar Name="PbInfoLife" Style="{StaticResource MiniProgress}" Value="100" Foreground="#00FF66"/>
-                                                    <TextBlock Name="TxtInfoWear" Text="Desgaste de c&#x00E9;lulas: 0%" FontSize="8.5" Foreground="{DynamicResource Faint}" Margin="0,4,0,0"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Detalhamento de Parametros Tecnicos (Tabela) -->
-                                    <Border Grid.Column="2" Background="#101014" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="14,10">
-                                        <StackPanel Name="PanelInfoParameters">
-                                            <TextBlock Text="ESPECIFICA&#x00C7;&#x00D5;ES T&#x00C9;CNICAS E CONFIABILIDADE:" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Muted}" Margin="0,0,0,8"/>
-                                        </StackPanel>
-                                    </Border>
-                                </Grid>
-                            </ScrollViewer>
-                        </Grid>
-
-                        <!-- 5. Rodape: Links Oficiais de Download -->
-                        <Border Grid.Row="3" Margin="0,14,0,0" Padding="0">
-                            <Grid>
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="* Utilit&#x00E1;rios oficiais Crystal Dew World:" FontSize="9" Foreground="{DynamicResource Faint}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                    <Button Name="BtnDownloadCrystalInfo" Style="{StaticResource OutlineButton}" Content="Baixar CrystalDiskInfo Oficial" FontSize="8.5" Padding="6,2" Margin="0,0,6,0"/>
-                                    <Button Name="BtnDownloadCrystalMark" Style="{StaticResource OutlineButton}" Content="Baixar CrystalDiskMark Oficial" FontSize="8.5" Padding="6,2"/>
-                                </StackPanel>
-                                <Button Name="BtnCloseDiskSuiteBottom" Style="{StaticResource OutlineButton}" Content="FECHAR" FontSize="9.5" Padding="14,4" HorizontalAlignment="Right"/>
-                            </Grid>
-                        </Border>
-                    </Grid>
                 </Border>
             </Grid>
         </Grid>
@@ -2602,6 +2625,8 @@ $btnTabDrivers          = $window.FindName("BtnTabDrivers")
 $btnTabBrowsers         = $window.FindName("BtnTabBrowsers")
 $btnTabInstaller        = $window.FindName("BtnTabInstaller")
 $btnTabTheme            = $window.FindName("BtnTabTheme")
+$btnTabDiskMark         = $window.FindName("BtnTabDiskMark")
+$btnTabDiskInfo         = $window.FindName("BtnTabDiskInfo")
 
 # Mini Status Rodape da Sidebar
 $txtCpuUsageMain        = $window.FindName("TxtCpuUsageMain")
@@ -2617,6 +2642,7 @@ $viewDrivers            = $window.FindName("ViewDrivers")
 $viewBrowsers           = $window.FindName("ViewBrowsers")
 $viewInstaller          = $window.FindName("ViewInstaller")
 $viewTheme              = $window.FindName("ViewTheme")
+$viewDisks              = $window.FindName("ViewDisks")
 
 # Controles ViewClocks (Hardware & Sensores)
 $txtCpuUsage            = $window.FindName("TxtCpuUsage")
@@ -3131,7 +3157,7 @@ function Show-ModalUpdate([string]$vTitle, [string]$vNum, [string]$vChangelog, [
 }
 
 function Check-MathzUpdate([bool]$interactive = $false) {
-    $currentVersionCode = 371
+    $currentVersionCode = 372
     $updateManifestUrl = "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/version.json"
 
     if ($interactive) {
@@ -3147,8 +3173,8 @@ function Check-MathzUpdate([bool]$interactive = $false) {
             Log-Hud "Nova versao encontrada: $($json.version)!"
         } else {
             if ($interactive) {
-                Log-Hud "Voce ja esta com a versao mais recente instalada (v3.7.1 Pro)!"
-                [System.Windows.MessageBox]::Show("Voce ja esta utilizando a versao mais recente do Painel de Comando MTZ (v3.7.1 Pro).`n`nNenhuma atualizacao necessaria no momento.", "Painel de Comando MTZ", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information) | Out-Null
+                Log-Hud "Voce ja esta com a versao mais recente instalada (v3.7.2 Pro)!"
+                [System.Windows.MessageBox]::Show("Voce ja esta utilizando a versao mais recente do Painel de Comando MTZ (v3.7.2 Pro).`n`nNenhuma atualizacao necessaria no momento.", "Painel de Comando MTZ", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information) | Out-Null
             }
         }
     } catch {
@@ -3174,12 +3200,9 @@ function Set-BenchSize([int]$sizeMb) {
     if ($btnBenchSize512) { $btnBenchSize512.Background = if ($sizeMb -eq 512) { $brAct } else { $brIna }; $btnBenchSize512.Foreground = if ($sizeMb -eq 512) { $fgAct } else { $fgIna } }
 }
 
-function Show-DiskSuiteModal([string]$activeTab = "MARK", [string]$targetDisk = "") {
-    if (-not $overlayModalContainer -or -not $cardModalDiskSuite) { return }
-
+function Init-DiskSuiteDrives {
     # Popula Unidades no ComboBox de Benchmark
-    if ($comboBenchDrive) {
-        $comboBenchDrive.Items.Clear()
+    if ($comboBenchDrive -and $comboBenchDrive.Items.Count -eq 0) {
         $drives = [System.IO.DriveInfo]::GetDrives() | Where-Object { $_.IsReady -and ($_.DriveType -eq 'Fixed' -or $_.DriveType -eq 'Removable') }
         foreach ($d in $drives) {
             $freeGb = [math]::Round($d.AvailableFreeSpace / 1GB, 1)
@@ -3191,8 +3214,7 @@ function Show-DiskSuiteModal([string]$activeTab = "MARK", [string]$targetDisk = 
     }
 
     # Popula Discos Fisicos no ComboBox de Info S.M.A.R.T.
-    if ($comboInfoDrive) {
-        $comboInfoDrive.Items.Clear()
+    if ($comboInfoDrive -and $comboInfoDrive.Items.Count -eq 0) {
         try {
             $pDisks = Get-PhysicalDisk -ErrorAction SilentlyContinue
             foreach ($pd in $pDisks) {
@@ -3202,55 +3224,24 @@ function Show-DiskSuiteModal([string]$activeTab = "MARK", [string]$targetDisk = 
         } catch {}
         if ($comboInfoDrive.Items.Count -gt 0) { $comboInfoDrive.SelectedIndex = 0 }
     }
-
     Set-BenchSize 128
-    Set-DiskSuiteTab $activeTab
+}
 
-    # Abre o Modal
-    if ($cardModalCentral) { $cardModalCentral.Visibility = [System.Windows.Visibility]::Collapsed }
-    $cardModalDiskSuite.Visibility = [System.Windows.Visibility]::Visible
-    $overlayModalContainer.Visibility = [System.Windows.Visibility]::Visible
-
-    try {
-        $animDim = New-Object System.Windows.Media.Animation.DoubleAnimation(0.0, 1.0, [TimeSpan]::FromMilliseconds(180))
-        $overlayDimmer.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $animDim)
-
-        $animCard = New-Object System.Windows.Media.Animation.DoubleAnimation(0.0, 1.0, [TimeSpan]::FromMilliseconds(220))
-        $cardModalDiskSuite.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $animCard)
-    } catch {
-        if ($overlayDimmer) { $overlayDimmer.Opacity = 1.0 }
-        if ($cardModalDiskSuite) { $cardModalDiskSuite.Opacity = 1.0 }
+function Show-DiskSuiteModal([string]$activeTab = "MARK", [string]$targetDisk = "") {
+    if ($activeTab -eq "MARK") {
+        Set-TabActive "DiskMark"
+    } else {
+        Set-TabActive "DiskInfo"
     }
 }
 
 function Hide-DiskSuiteModal {
-    if (-not $overlayModalContainer) { return }
-    if ($global:isBenchRunning) {
-        Log-Hud "Aguarde o benchmark concluir antes de fechar."
-        return
-    }
-
-    try {
-        if ($overlayDimmer -and $cardModalDiskSuite) {
-            $animDim = New-Object System.Windows.Media.Animation.DoubleAnimation(1.0, 0.0, [TimeSpan]::FromMilliseconds(150))
-            $animDim.Add_Completed({
-                if ($cardModalDiskSuite) { $cardModalDiskSuite.Visibility = [System.Windows.Visibility]::Collapsed }
-                if ($overlayModalContainer) { $overlayModalContainer.Visibility = [System.Windows.Visibility]::Collapsed }
-            })
-            $overlayDimmer.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $animDim)
-        } else {
-            if ($cardModalDiskSuite) { $cardModalDiskSuite.Visibility = [System.Windows.Visibility]::Collapsed }
-            if ($overlayModalContainer) { $overlayModalContainer.Visibility = [System.Windows.Visibility]::Collapsed }
-        }
-    } catch {
-        if ($cardModalDiskSuite) { $cardModalDiskSuite.Visibility = [System.Windows.Visibility]::Collapsed }
-        if ($overlayModalContainer) { $overlayModalContainer.Visibility = [System.Windows.Visibility]::Collapsed }
-    }
+    Set-TabActive "Clocks"
 }
 
 function Set-DiskSuiteTab([string]$tab) {
     $brAct = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FF1E27")
-    $brIna = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#121212")
+    $brIna = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#121216")
     $fgAct = [System.Windows.Media.Brushes]::White
     $fgIna = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#8C8C8C")
 
@@ -3259,11 +3250,13 @@ function Set-DiskSuiteTab([string]$tab) {
         if ($btnDiskTabInfo) { $btnDiskTabInfo.Background = $brIna; $btnDiskTabInfo.Foreground = $fgIna }
         if ($panelDiskMarkView) { $panelDiskMarkView.Visibility = [System.Windows.Visibility]::Visible }
         if ($panelDiskInfoView) { $panelDiskInfoView.Visibility = [System.Windows.Visibility]::Collapsed }
+        if ($txtActiveTabTitle) { $txtActiveTabTitle.Text = "ARMAZENAMENTO // CRYSTALDISKMARK (TESTE DE VELOCIDADE)" }
     } else {
         if ($btnDiskTabMark) { $btnDiskTabMark.Background = $brIna; $btnDiskTabMark.Foreground = $fgIna }
         if ($btnDiskTabInfo) { $btnDiskTabInfo.Background = $brAct; $btnDiskTabInfo.Foreground = $fgAct }
         if ($panelDiskMarkView) { $panelDiskMarkView.Visibility = [System.Windows.Visibility]::Collapsed }
         if ($panelDiskInfoView) { $panelDiskInfoView.Visibility = [System.Windows.Visibility]::Visible }
+        if ($txtActiveTabTitle) { $txtActiveTabTitle.Text = "ARMAZENAMENTO // CRYSTALDISKINFO (SAUDE S.M.A.R.T.)" }
         Update-DiskInfoDetails
     }
 }
@@ -3877,7 +3870,7 @@ function Set-TabActive([string]$tabName) {
     $brushActiveBg    = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#151515")
     $brushAccent      = if ($global:currentAccentBrush) { $global:currentAccentBrush } else { [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FF1E27") }
 
-    $allTabs = @($btnTabClocks, $btnTabTweaks, $btnTabStartup, $btnTabCursors, $btnTabDrivers, $btnTabBrowsers, $btnTabInstaller, $btnTabTheme)
+    $allTabs = @($btnTabClocks, $btnTabTweaks, $btnTabStartup, $btnTabCursors, $btnTabDrivers, $btnTabBrowsers, $btnTabInstaller, $btnTabTheme, $btnTabDiskMark, $btnTabDiskInfo)
     foreach ($tab in $allTabs) {
         if ($tab) {
             $tab.Background      = $brushTransparent
@@ -3888,7 +3881,7 @@ function Set-TabActive([string]$tabName) {
         }
     }
 
-    $allViews = @($viewClocks, $viewTweaks, $viewStartup, $viewCursors, $viewDrivers, $viewBrowsers, $viewInstaller, $viewTheme)
+    $allViews = @($viewClocks, $viewTweaks, $viewStartup, $viewCursors, $viewDrivers, $viewBrowsers, $viewInstaller, $viewTheme, $viewDisks)
     foreach ($v in $allViews) {
         if ($v) { $v.Visibility = [System.Windows.Visibility]::Collapsed }
     }
@@ -3990,6 +3983,32 @@ function Set-TabActive([string]$tabName) {
             Animate-ViewIn $viewTheme
             if ($txtActiveTabTitle) { $txtActiveTabTitle.Text = "CORES, TEMA & TRANSLUCIDEZ" }
         }
+        "DiskMark" {
+            if ($btnTabDiskMark) {
+                $btnTabDiskMark.Background      = $brushActiveBg
+                $btnTabDiskMark.BorderBrush     = $brushAccent
+                $btnTabDiskMark.BorderThickness = [System.Windows.Thickness]::new(3, 0, 0, 0)
+                $btnTabDiskMark.Foreground      = $brushActiveFg
+                $btnTabDiskMark.FontWeight      = [System.Windows.FontWeights]::SemiBold
+            }
+            Animate-ViewIn $viewDisks
+            if ($txtActiveTabTitle) { $txtActiveTabTitle.Text = "ARMAZENAMENTO // CRYSTALDISKMARK (TESTE DE VELOCIDADE)" }
+            Set-DiskSuiteTab "MARK"
+            Init-DiskSuiteDrives
+        }
+        "DiskInfo" {
+            if ($btnTabDiskInfo) {
+                $btnTabDiskInfo.Background      = $brushActiveBg
+                $btnTabDiskInfo.BorderBrush     = $brushAccent
+                $btnTabDiskInfo.BorderThickness = [System.Windows.Thickness]::new(3, 0, 0, 0)
+                $btnTabDiskInfo.Foreground      = $brushActiveFg
+                $btnTabDiskInfo.FontWeight      = [System.Windows.FontWeights]::SemiBold
+            }
+            Animate-ViewIn $viewDisks
+            if ($txtActiveTabTitle) { $txtActiveTabTitle.Text = "ARMAZENAMENTO // CRYSTALDISKINFO (SAUDE S.M.A.R.T.)" }
+            Set-DiskSuiteTab "INFO"
+            Init-DiskSuiteDrives
+        }
     }
 }
 
@@ -4004,6 +4023,10 @@ if ($btnTabCursors)   { $btnTabCursors.Add_Click({   Set-TabActive "Cursors" }) 
 if ($btnTabDrivers)   { $btnTabDrivers.Add_Click({   Set-TabActive "Drivers" }) }
 if ($btnTabBrowsers)  { $btnTabBrowsers.Add_Click({  Set-TabActive "Browsers" }) }
 if ($btnTabInstaller) { $btnTabInstaller.Add_Click({ Set-TabActive "Installer" }) }
+if ($btnTabDiskMark)  { $btnTabDiskMark.Add_Click({  Set-TabActive "DiskMark" }) }
+if ($btnTabDiskInfo)  { $btnTabDiskInfo.Add_Click({  Set-TabActive "DiskInfo" }) }
+if ($btnDiskTabMark)  { $btnDiskTabMark.Add_Click({  Set-DiskSuiteTab "MARK" }) }
+if ($btnDiskTabInfo)  { $btnDiskTabInfo.Add_Click({  Set-DiskSuiteTab "INFO" }) }
 # ==============================================================================
 # 6. MOTOR DE TEMA, CORES E TRANSLUCIDEZ (GLASS / ACRYLIC BLUR)
 # ==============================================================================
