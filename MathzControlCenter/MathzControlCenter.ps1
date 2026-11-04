@@ -2033,7 +2033,7 @@ foreach ($fDir in $fontCandidates) {
                                             <Border Margin="4" Background="{DynamicResource Card}" CornerRadius="8" Padding="6">
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <Canvas Width="28" Height="28">
-                                                        <Polygon Name="PrevPolyArrow" Points="2,2 2,23 7,18 11,27 15,25 11,17 18,17" Fill="#050508" Stroke="#FF1E27" StrokeThickness="2.0" StrokeLineJoin="Round"/>
+                                                        <Polygon Name="PrevPolyArrow" Points="2,2 2,17 5,13 8,20 11,19 8,13 13,13" Fill="#050508" Stroke="#00E5FF" StrokeThickness="1.4" StrokeLineJoin="Round"/>
                                                     </Canvas>
                                                     <TextBlock Text="Normal" Foreground="{DynamicResource Faint}" FontSize="8" HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                                 </StackPanel>
@@ -2041,7 +2041,7 @@ foreach ($fDir in $fontCandidates) {
                                             <Border Margin="4" Background="{DynamicResource Card}" CornerRadius="8" Padding="6">
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <Canvas Width="28" Height="28">
-                                                        <Polygon Name="PrevPolyAppArrow" Points="2,2 2,19 6,15 9,21 12,20 9,14 14,14" Fill="#050508" Stroke="#FF1E27" StrokeThickness="1.8" StrokeLineJoin="Round"/>
+                                                        <Polygon Name="PrevPolyAppArrow" Points="2,2 2,15 4,12 7,17 9,16 7,12 11,12" Fill="#050508" Stroke="#00E5FF" StrokeThickness="1.3" StrokeLineJoin="Round"/>
                                                         <Ellipse Name="PrevEllAppBg" Canvas.Left="14" Canvas.Top="12" Width="13" Height="13" Fill="#050508" Stroke="#FF1E27" StrokeThickness="1.2"/>
                                                         <Path Name="PrevPathAppArc" Canvas.Left="14" Canvas.Top="12" Data="M 10,2 A 5,5 0 1,1 3,10" Stroke="#FF1E27" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                                                         <Ellipse Name="PrevEllAppDot" Canvas.Left="18.5" Canvas.Top="16.5" Width="4" Height="4" Fill="#FF1E27"/>
@@ -2075,7 +2075,7 @@ foreach ($fDir in $fontCandidates) {
                                             <Border Margin="4" Background="{DynamicResource Card}" CornerRadius="8" Padding="6">
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <Canvas Width="28" Height="28">
-                                                        <Polygon Name="PrevPolyHand" Points="12,2 15,2 15,11 18,12 21,14 21,22 18,26 10,26 7,21 7,16 12,14" Fill="#050508" Stroke="#FF1E27" StrokeThickness="1.8" StrokeLineJoin="Round"/>
+                                                        <Polygon Name="PrevPolyHand" Points="11,3 14,3 14,10 17,11 19,13 19,21 16,24 9,24 7,19 7,15 11,13" Fill="#050508" Stroke="#00E5FF" StrokeThickness="1.4" StrokeLineJoin="Round"/>
                                                         <Line Name="PrevLineHand" X1="14" Y1="13" X2="14" Y2="18" Stroke="#FF1E27" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                                                     </Canvas>
                                                     <TextBlock Text="Link" Foreground="{DynamicResource Faint}" FontSize="8" HorizontalAlignment="Center" Margin="0,3,0,0"/>
@@ -6308,6 +6308,11 @@ if ($btnApplyCursorColors) {
 
         Invoke-ModalAction "GERANDO CURSORES PERSONALIZADOS" "Compilando bitmaps .CUR com a paleta selecionada ($outHex / $inHex) e instalando no Windows..." "CURSORES APLICADOS COM SUCESSO!" "Novos cursores eSports foram compilados e ativados em toda a sessao do sistema!" {
             try {
+                $curOut = if ($txtOutlineHex) { $txtOutlineHex.Text.Trim() } else { $global:currentOutlineHex }
+                if ($curOut -notmatch '^#') { $curOut = "#$curOut" }
+                $curIn = if ($txtInsideHex) { $txtInsideHex.Text.Trim() } else { $global:currentInsideHex }
+                if ($curIn -notmatch '^#') { $curIn = "#$curIn" }
+
                 $candidates = @(
                     (Join-Path -Path $PSScriptRoot -ChildPath "CursorGenerator.ps1"),
                     (Join-Path -Path (Split-Path $PSScriptRoot -Parent) -ChildPath "MathzControlCenter\CursorGenerator.ps1"),
@@ -6319,8 +6324,8 @@ if ($btnApplyCursorColors) {
                 $cg = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
                 if ($cg) {
                     . $cg
-                    Apply-MathzCustomColors -InsideHex $inHex -OutlineHex $outHex | Out-Null
-                    Log-Hud "Cursores customizados ATIVADOS no Windows! (Linha: $outHex | Fundo: $inHex)"
+                    Apply-MathzCustomColors -InsideHex $curIn -OutlineHex $curOut | Out-Null
+                    Log-Hud "Cursores customizados ATIVADOS no Windows! (Linha: $curOut | Fundo: $curIn)"
                 } else {
                     Log-Hud "CursorGenerator.ps1 nao encontrado no diretorio de instalacao."
                 }

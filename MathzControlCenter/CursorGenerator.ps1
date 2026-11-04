@@ -1,32 +1,33 @@
-﻿# ==============================================================================
+# ==============================================================================
 # PROJETO MATHZ OPTIMIZER - MOTOR DE GERACAO DINAMICA DE CURSORES .CUR
-# Permite ao usuario alterar a Cor de Dentro (Preenchimento) e a Linha de Fora
+# Cursor eSports Compacto de Alta Performance (Proporcional & Nao-Obstrutivo)
 # ==============================================================================
 
 Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue
 
+# Geometria eSports Compacta (Tamanho ideal: ~18px de altura, 13px de largura)
 $compactArrowPts = [System.Drawing.Point[]]@(
     [System.Drawing.Point]::new(2, 2),
-    [System.Drawing.Point]::new(2, 23),
-    [System.Drawing.Point]::new(7, 18),
-    [System.Drawing.Point]::new(11, 27),
-    [System.Drawing.Point]::new(15, 25),
-    [System.Drawing.Point]::new(11, 17),
-    [System.Drawing.Point]::new(18, 17)
+    [System.Drawing.Point]::new(2, 17),
+    [System.Drawing.Point]::new(5, 13),
+    [System.Drawing.Point]::new(8, 20),
+    [System.Drawing.Point]::new(11, 19),
+    [System.Drawing.Point]::new(8, 13),
+    [System.Drawing.Point]::new(13, 13)
 )
 
 $compactHandPts = [System.Drawing.Point[]]@(
-    [System.Drawing.Point]::new(12, 2),
-    [System.Drawing.Point]::new(15, 2),
-    [System.Drawing.Point]::new(15, 11),
-    [System.Drawing.Point]::new(18, 12),
-    [System.Drawing.Point]::new(21, 14),
-    [System.Drawing.Point]::new(21, 22),
-    [System.Drawing.Point]::new(18, 26),
-    [System.Drawing.Point]::new(10, 26),
-    [System.Drawing.Point]::new(7, 21),
-    [System.Drawing.Point]::new(7, 16),
-    [System.Drawing.Point]::new(12, 14)
+    [System.Drawing.Point]::new(11, 3),
+    [System.Drawing.Point]::new(14, 3),
+    [System.Drawing.Point]::new(14, 10),
+    [System.Drawing.Point]::new(17, 11),
+    [System.Drawing.Point]::new(19, 13),
+    [System.Drawing.Point]::new(19, 21),
+    [System.Drawing.Point]::new(16, 24),
+    [System.Drawing.Point]::new(9, 24),
+    [System.Drawing.Point]::new(7, 19),
+    [System.Drawing.Point]::new(7, 15),
+    [System.Drawing.Point]::new(11, 13)
 )
 
 $nsPts = [System.Drawing.Point[]]@(
@@ -155,7 +156,7 @@ function New-CanvasBmp {
 function Generate-MathzSuiteFiles {
     param(
         [string]$InsideHex = "#050508",
-        [string]$OutlineHex = "#FF003C",
+        [string]$OutlineHex = "#00E5FF",
         [string]$TargetDir
     )
 
@@ -166,49 +167,62 @@ function Generate-MathzSuiteFiles {
     try {
         $cIn = [System.Drawing.ColorTranslator]::FromHtml($InsideHex)
     } catch {
-        $cIn = [System.Drawing.Color]::FromArgb(255, 6, 6, 9)
+        $cIn = [System.Drawing.Color]::FromArgb(255, 5, 5, 8)
     }
 
     try {
         $cOut = [System.Drawing.ColorTranslator]::FromHtml($OutlineHex)
     } catch {
-        $cOut = [System.Drawing.Color]::FromArgb(255, 255, 0, 60)
+        $cOut = [System.Drawing.Color]::FromArgb(255, 0, 229, 255)
     }
 
     $bIn = New-Object System.Drawing.SolidBrush $cIn
-    $pOut = New-Object System.Drawing.Pen $cOut, 2.0; $pOut.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round; $pOut.StartCap = [System.Drawing.Drawing2D.LineCap]::Round; $pOut.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+    # Espessura equilibrada de 1.4px com cantos suaves para visual compacto e esportivo
+    $pOut = New-Object System.Drawing.Pen $cOut, 1.4
+    $pOut.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
+    $pOut.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+    $pOut.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
     $bOut = New-Object System.Drawing.SolidBrush $cOut
 
-    # 1. Arrow (Ponteiro Normal)
+    # 1. Arrow (Ponteiro Normal Compacto)
     $c = New-CanvasBmp; $c.Graphics.FillPolygon($bIn, $compactArrowPts); $c.Graphics.DrawPolygon($pOut, $compactArrowPts); $c.Graphics.Dispose()
     Save-CurStream $c.Bitmap (Join-Path $TargetDir "mathz_arrow.cur") 2 2; $c.Bitmap.Dispose()
 
-    # 2. AppStarting (Trabalhando em Segundo Plano - Seta + Mini Radar ao Lado)
+    # 2. AppStarting (Trabalhando em Segundo Plano - Seta Compacta + Mini Radar ao Lado)
     $c = New-CanvasBmp
-    $c.Graphics.FillPolygon($bIn, $compactArrowPts); $c.Graphics.DrawPolygon($pOut, $compactArrowPts)
-    $c.Graphics.FillEllipse($bIn, 15, 13, 13, 13); $c.Graphics.DrawEllipse($pOut, 15, 13, 13, 13)
-    $arcP = New-Object System.Drawing.Pen $cOut, 1.8; $c.Graphics.DrawArc($arcP, 17, 15, 9, 9, [single]45, [single]220); $arcP.Dispose()
-    $c.Graphics.FillEllipse($bOut, 19, 17, 4, 4); $c.Graphics.Dispose()
+    $appPts = [System.Drawing.Point[]]@(
+        [System.Drawing.Point]::new(2, 2),
+        [System.Drawing.Point]::new(2, 15),
+        [System.Drawing.Point]::new(4, 12),
+        [System.Drawing.Point]::new(7, 17),
+        [System.Drawing.Point]::new(9, 16),
+        [System.Drawing.Point]::new(7, 12),
+        [System.Drawing.Point]::new(11, 12)
+    )
+    $c.Graphics.FillPolygon($bIn, $appPts); $c.Graphics.DrawPolygon($pOut, $appPts)
+    $c.Graphics.FillEllipse($bIn, 14, 12, 12, 12); $c.Graphics.DrawEllipse($pOut, 14, 12, 12, 12)
+    $arcP = New-Object System.Drawing.Pen $cOut, 1.6; $arcP.StartCap = [System.Drawing.Drawing2D.LineCap]::Round; $arcP.EndCap = [System.Drawing.Drawing2D.LineCap]::Round; $c.Graphics.DrawArc($arcP, 16, 14, 8, 8, [single]45, [single]220); $arcP.Dispose()
+    $c.Graphics.FillEllipse($bOut, 18, 16, 3, 3); $c.Graphics.Dispose()
     Save-CurStream $c.Bitmap (Join-Path $TargetDir "mathz_appstarting.cur") 2 2; $c.Bitmap.Dispose()
 
-    # 3. Wait (Ocupado - Radar Cyber com Nucleo Neon)
+    # 3. Wait (Ocupado - Radar Cyber Compacto)
     $c = New-CanvasBmp
     $c.Graphics.FillEllipse($bIn, 6, 6, 20, 20); $c.Graphics.DrawEllipse($pOut, 6, 6, 20, 20)
-    $arcP = New-Object System.Drawing.Pen $cOut, 2.0; $c.Graphics.DrawArc($arcP, 9, 9, 14, 14, [single]30, [single]220); $arcP.Dispose()
+    $arcP = New-Object System.Drawing.Pen $cOut, 1.8; $arcP.StartCap = [System.Drawing.Drawing2D.LineCap]::Round; $arcP.EndCap = [System.Drawing.Drawing2D.LineCap]::Round; $c.Graphics.DrawArc($arcP, 9, 9, 14, 14, [single]30, [single]220); $arcP.Dispose()
     $c.Graphics.FillEllipse($bOut, 14, 14, 4, 4); $c.Graphics.Dispose()
     Save-CurStream $c.Bitmap (Join-Path $TargetDir "mathz_wait.cur") 16 16; $c.Bitmap.Dispose()
 
-    # 4. Cross (Selecao de Precisao / Mira FPS)
+    # 4. Cross (Selecao de Precisao / Mira FPS Compacta)
     $c = New-CanvasBmp
-    $c.Graphics.DrawLine($pOut, 16, 8, 16, 13); $c.Graphics.DrawLine($pOut, 16, 19, 16, 24)
-    $c.Graphics.DrawLine($pOut, 8, 16, 13, 16); $c.Graphics.DrawLine($pOut, 19, 16, 24, 16)
+    $c.Graphics.DrawLine($pOut, 16, 6, 16, 12); $c.Graphics.DrawLine($pOut, 16, 20, 16, 26)
+    $c.Graphics.DrawLine($pOut, 6, 16, 12, 16); $c.Graphics.DrawLine($pOut, 20, 16, 26, 16)
     $c.Graphics.FillEllipse($bOut, 15, 15, 2, 2); $c.Graphics.DrawEllipse($pOut, 11, 11, 10, 10); $c.Graphics.Dispose()
     Save-CurStream $c.Bitmap (Join-Path $TargetDir "mathz_cross.cur") 16 16; $c.Bitmap.Dispose()
 
     # 5. Beam (Selecao de Texto)
     $c = New-CanvasBmp
-    $c.Graphics.DrawLine($pOut, 13, 8, 19, 8); $c.Graphics.DrawLine($pOut, 13, 24, 19, 24); $c.Graphics.DrawLine($pOut, 16, 8, 16, 24)
-    $c.Graphics.FillRectangle($bIn, 15, 10, 2, 12); $c.Graphics.Dispose()
+    $c.Graphics.DrawLine($pOut, 12, 6, 20, 6); $c.Graphics.DrawLine($pOut, 12, 26, 20, 26); $c.Graphics.DrawLine($pOut, 16, 6, 16, 26)
+    $c.Graphics.FillRectangle($bIn, 15, 8, 2, 16); $c.Graphics.Dispose()
     Save-CurStream $c.Bitmap (Join-Path $TargetDir "mathz_beam.cur") 16 16; $c.Bitmap.Dispose()
 
     # 6. Hand (Selecao de Link)
@@ -254,7 +268,7 @@ function Generate-MathzSuiteFiles {
     # 14. Help (Ajuda)
     $c = New-CanvasBmp; $c.Graphics.FillPolygon($bIn, $compactArrowPts); $c.Graphics.DrawPolygon($pOut, $compactArrowPts)
     $fnt = [System.Drawing.Font]::new("Arial", [single]9, [System.Drawing.FontStyle]::Bold)
-    $c.Graphics.DrawString("?", $fnt, $bOut, [single]16, [single]10); $fnt.Dispose(); $c.Graphics.Dispose()
+    $c.Graphics.DrawString("?", $fnt, $bOut, [single]14, [single]10); $fnt.Dispose(); $c.Graphics.Dispose()
     Save-CurStream $c.Bitmap (Join-Path $TargetDir "mathz_help.cur") 2 2; $c.Bitmap.Dispose()
 
     # 15. Pen (Caneta)
@@ -278,7 +292,7 @@ function Generate-MathzSuiteFiles {
 function Apply-MathzCustomColors {
     param(
         [string]$InsideHex = "#050508",
-        [string]$OutlineHex = "#FF003C"
+        [string]$OutlineHex = "#00E5FF"
     )
 
     $cursorSysDir = "C:\Windows\Cursors\MathzPerformance"
@@ -289,10 +303,9 @@ function Apply-MathzCustomColors {
         $targetDir = [System.IO.Path]::Combine($env:LOCALAPPDATA, "MathzControlPanel\Cursors")
     }
 
-    # Gera todos os 17 cursores .cur com as novas cores
+    # Gera todos os 17 cursores .cur compactos com a paleta escolhida
     Generate-MathzSuiteFiles -InsideHex $InsideHex -OutlineHex $OutlineHex -TargetDir $targetDir
 
-    # Mapeia na chave do usuario atual
     $cursorMap = [ordered]@{
         "Arrow"       = "$targetDir\mathz_arrow.cur"
         "Help"        = "$targetDir\mathz_help.cur"
@@ -315,7 +328,7 @@ function Apply-MathzCustomColors {
 
     $schemeName = "Mathz Custom ($OutlineHex)"
 
-    # Registra no banco de esquemas do Windows (HKCU:\Control Panel\Cursors\Schemes)
+    # 1. Registra no banco de esquemas do Windows (HKCU:\Control Panel\Cursors\Schemes)
     $schemesPath = "HKCU:\Control Panel\Cursors\Schemes"
     if (-not (Test-Path $schemesPath)) { New-Item -Path $schemesPath -Force | Out-Null }
     $schemeVal = @(
@@ -339,7 +352,7 @@ function Apply-MathzCustomColors {
     ) -join ","
     Set-ItemProperty -Path $schemesPath -Name $schemeName -Value $schemeVal -Force
 
-    # Mapeia como esquema de usuario ativo (Scheme Source = 1)
+    # 2. Mapeia como esquema de usuario ativo (Scheme Source = 1)
     $curRegPath = "HKCU:\Control Panel\Cursors"
     if (-not (Test-Path $curRegPath)) { New-Item -Path $curRegPath -Force | Out-Null }
     Set-ItemProperty -Path $curRegPath -Name "(Default)" -Value $schemeName -Force
@@ -349,28 +362,24 @@ function Apply-MathzCustomColors {
         Set-ItemProperty -Path $curRegPath -Name $key -Value $cursorMap[$key] -Force
     }
 
-    # Recarrega via API nativa User32 instantaneamente (Injecao em RAM + Broadcast do Windows)
-    if (-not ([System.Management.Automation.PSTypeName]'WinCursorAPI').Type) {
+    # 3. Recarrega via API nativa User32 instantaneamente sem cache
+    if (-not ([System.Management.Automation.PSTypeName]'WinCursorEngine').Type) {
         $csharp = @'
         using System;
         using System.Runtime.InteropServices;
 
-        public class WinCursorAPI {
+        public class WinCursorEngine {
             [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-            public static extern IntPtr LoadCursorFromFile(string lpFileName);
+            public static extern IntPtr LoadImage(IntPtr hinst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);
 
             [DllImport("user32.dll", SetLastError = true)]
             public static extern bool SetSystemCursor(IntPtr hcur, uint id);
 
-            [DllImport("user32.dll", EntryPoint = "SystemParametersInfoW", SetLastError = true)]
-            public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, IntPtr pvParam, uint fWinIni);
-
             [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
             public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, IntPtr wParam, string lParam, uint fuFlags, uint uTimeout, out IntPtr lpdwResult);
 
-            public const uint SPI_SETCURSORS = 0x0057;
-            public const uint SPIF_UPDATEINIFILE = 0x01;
-            public const uint SPIF_SENDCHANGE = 0x02;
+            public const uint IMAGE_CURSOR = 2;
+            public const uint LR_LOADFROMFILE = 0x0010;
             public const uint WM_SETTINGCHANGE = 0x001A;
             public const uint HWND_BROADCAST = 0xFFFF;
             public const uint SMTO_ABORTIFHUNG = 0x0002;
@@ -414,7 +423,8 @@ function Apply-MathzCustomColors {
                     try {
                         string curFile = System.IO.Path.Combine(dir, kvp.Key);
                         if (System.IO.File.Exists(curFile)) {
-                            IntPtr h = LoadCursorFromFile(curFile);
+                            // Carrega SEMPRE direto do disco (burlar cache de nome do User32)
+                            IntPtr h = LoadImage(IntPtr.Zero, curFile, IMAGE_CURSOR, 0, 0, LR_LOADFROMFILE);
                             if (h != IntPtr.Zero) {
                                 SetSystemCursor(h, kvp.Value);
                             }
@@ -452,17 +462,13 @@ function Apply-MathzCustomColors {
                     try {
                         string curFile = System.IO.Path.Combine(curDir, kvp.Key);
                         if (System.IO.File.Exists(curFile)) {
-                            IntPtr h = LoadCursorFromFile(curFile);
+                            IntPtr h = LoadImage(IntPtr.Zero, curFile, IMAGE_CURSOR, 0, 0, LR_LOADFROMFILE);
                             if (h != IntPtr.Zero) {
                                 SetSystemCursor(h, kvp.Value);
                             }
                         }
                     } catch { }
                 }
-
-                try {
-                    SystemParametersInfo(SPI_SETCURSORS, 0, IntPtr.Zero, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
-                } catch { }
 
                 try {
                     IntPtr res;
@@ -474,7 +480,11 @@ function Apply-MathzCustomColors {
         Add-Type -TypeDefinition $csharp -ErrorAction SilentlyContinue
     }
 
-    [WinCursorAPI]::ReloadLive("$targetDir")
+    if (([System.Management.Automation.PSTypeName]'WinCursorEngine').Type) {
+        [WinCursorEngine]::ReloadLive("$targetDir")
+    } elseif (([System.Management.Automation.PSTypeName]'WinCursorAPI').Type) {
+        [WinCursorAPI]::ReloadLive("$targetDir")
+    }
     return $true
 }
 
@@ -512,11 +522,13 @@ function Restore-MathzDefaultCursors {
         $p = $defaultMap[$role]
         if (Test-Path $p) {
             Set-ItemProperty -Path $curRegPath -Name $role -Value $p -Force
-        } else {
-            Set-ItemProperty -Path $curRegPath -Name $role -Value "" -Force
         }
     }
 
-    [WinCursorAPI]::RestoreLive()
+    if (([System.Management.Automation.PSTypeName]'WinCursorEngine').Type) {
+        [WinCursorEngine]::RestoreLive()
+    } elseif (([System.Management.Automation.PSTypeName]'WinCursorAPI').Type) {
+        [WinCursorAPI]::RestoreLive()
+    }
     return $true
 }
