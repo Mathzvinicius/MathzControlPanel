@@ -637,6 +637,123 @@ foreach ($fDir in $fontCandidates) {
                 </Setter.Value>
             </Setter>
         </Style>
+        <!-- ========================================================================= -->
+        <!-- ESTILO COMBOBOX CYBERPUNK DARK (ALTO CONTRASTE MTZ)                       -->
+        <!-- ========================================================================= -->
+        <ControlTemplate TargetType="ToggleButton" x:Key="DarkComboBoxToggleButton">
+            <Grid Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="32" />
+                </Grid.ColumnDefinitions>
+                <Border x:Name="Border" Grid.ColumnSpan="2" CornerRadius="8"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}" />
+                <Border Grid.Column="1" Background="Transparent" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Path x:Name="Arrow" Fill="#888899" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4.5 4.5 L 9 0 Z"/>
+                </Border>
+            </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="true">
+                    <Setter TargetName="Border" Property="BorderBrush" Value="#FF1E27" />
+                    <Setter TargetName="Arrow" Property="Fill" Value="#FF1E27" />
+                </Trigger>
+                <Trigger Property="IsChecked" Value="true">
+                    <Setter TargetName="Border" Property="BorderBrush" Value="#FF1E27" />
+                    <Setter TargetName="Arrow" Property="Fill" Value="#FF1E27" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <Style x:Key="DarkComboBoxItem" TargetType="ComboBoxItem">
+            <Setter Property="SnapsToDevicePixels" Value="true"/>
+            <Setter Property="OverridesDefaultStyle" Value="true"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBorder" Padding="12,8" SnapsToDevicePixels="true" Background="#0C0D12" Margin="0,1" CornerRadius="4">
+                            <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="true">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#FF1E27"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="true">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#1C1F2B"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DarkComboBox" TargetType="ComboBox">
+            <Setter Property="SnapsToDevicePixels" Value="true"/>
+            <Setter Property="OverridesDefaultStyle" Value="true"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="ScrollViewer.CanContentScroll" Value="true"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#0A0B0F"/>
+            <Setter Property="BorderBrush" Value="#252836"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource DarkComboBoxItem}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Name="ToggleButton" 
+                                          Template="{StaticResource DarkComboBoxToggleButton}" 
+                                          Focusable="false"
+                                          IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}" 
+                                          ClickMode="Press"
+                                          Background="{TemplateBinding Background}"
+                                          BorderBrush="{TemplateBinding BorderBrush}"
+                                          BorderThickness="{TemplateBinding BorderThickness}"/>
+                            <ContentPresenter Name="ContentSite" IsHitTestVisible="False" 
+                                              Content="{TemplateBinding SelectionBoxItem}" 
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" 
+                                              ContentTemplateSelector="{TemplateBinding SelectionBoxItemTemplateSelector}" 
+                                              Margin="12,0,32,0" 
+                                              VerticalAlignment="Center" 
+                                              HorizontalAlignment="Left"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                              TextElement.FontWeight="SemiBold" />
+                            <Popup Name="Popup" Placement="Bottom" 
+                                   IsOpen="{TemplateBinding IsDropDownOpen}" 
+                                   AllowsTransparency="True" 
+                                   Focusable="False" 
+                                   PopupAnimation="Slide">
+                                <Grid Name="DropDown" SnapsToDevicePixels="True" 
+                                      MinWidth="{TemplateBinding ActualWidth}" 
+                                      MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border x:Name="DropDownBorder" 
+                                            Background="#0C0D12" 
+                                            BorderThickness="1" 
+                                            BorderBrush="#FF1E27" 
+                                            CornerRadius="8"
+                                            Margin="0,3,0,0"
+                                            Padding="3,4"/>
+                                    <ScrollViewer Margin="0,3" SnapsToDevicePixels="True">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBox" BasedOn="{StaticResource DarkComboBox}"/>
     </Window.Resources>
 
     <!-- CONTAINER DA JANELA (TRANSL&#x00DA;CIDO COM VIDRO ACR&#x00CD;LICO POR PADR&#x00C3;O) -->
@@ -2225,7 +2342,7 @@ foreach ($fDir in $fontCandidates) {
                                             <!-- Unidade -->
                                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                                                 <TextBlock Text="UNIDADE:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <ComboBox Name="ComboBenchDrive" Width="170" Height="28" Background="#0C0C0E" Foreground="#FFFFFF" BorderBrush="{DynamicResource Line}" FontSize="10.5"/>
+                                                <ComboBox Name="ComboBenchDrive" Style="{StaticResource DarkComboBox}" Width="240" Height="30" FontSize="11"/>
                                             </StackPanel>
 
                                             <!-- Tamanho do Teste -->
@@ -2345,7 +2462,7 @@ foreach ($fDir in $fontCandidates) {
 
                                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                                                 <TextBlock Text="DISCO F&#x00CD;SICO:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                                <ComboBox Name="ComboInfoDrive" Width="400" Height="28" Background="#0C0C0E" Foreground="#FFFFFF" BorderBrush="{DynamicResource Line}" FontSize="10.5"/>
+                                                <ComboBox Name="ComboInfoDrive" Style="{StaticResource DarkComboBox}" Width="450" Height="30" FontSize="11"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
@@ -3221,11 +3338,22 @@ function Init-DiskSuiteDrives {
     if ($comboInfoDrive -and $comboInfoDrive.Items.Count -eq 0) {
         try {
             $pDisks = Get-PhysicalDisk -ErrorAction SilentlyContinue
-            foreach ($pd in $pDisks) {
-                $szGb = [math]::Round($pd.Size / 1GB, 0)
-                $comboInfoDrive.Items.Add("$($pd.FriendlyName) ($($pd.BusType) $($pd.MediaType) - $szGb GB)") | Out-Null
+            if ($pDisks) {
+                foreach ($pd in $pDisks) {
+                    $szGb = [math]::Round($pd.Size / 1GB, 0)
+                    $comboInfoDrive.Items.Add("$($pd.FriendlyName) ($($pd.BusType) $($pd.MediaType) - $szGb GB)") | Out-Null
+                }
             }
         } catch {}
+        if ($comboInfoDrive.Items.Count -eq 0) {
+            try {
+                $wDisks = Get-CimInstance Win32_DiskDrive -ErrorAction SilentlyContinue
+                foreach ($wd in $wDisks) {
+                    $szGb = [math]::Round($wd.Size / 1GB, 0)
+                    $comboInfoDrive.Items.Add("$($wd.Model) ($szGb GB)") | Out-Null
+                }
+            } catch {}
+        }
         if ($comboInfoDrive.Items.Count -gt 0) { $comboInfoDrive.SelectedIndex = 0 }
     }
     Set-BenchSize 128
@@ -4018,6 +4146,7 @@ function Set-TabActive([string]$tabName) {
             if ($txtActiveTabTitle) { $txtActiveTabTitle.Text = "ARMAZENAMENTO // CRYSTALDISKINFO (SAUDE S.M.A.R.T.)" }
             Set-DiskSuiteTab "INFO"
             Init-DiskSuiteDrives
+            Update-DiskInfoDetails
         }
     }
 }
