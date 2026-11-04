@@ -1,17 +1,16 @@
-{
-  "version": "3.7.0",
-  "versionCode": 370,
-  "releaseDate": "2026-11-03",
-  "title": "Painel de Comando MTZ v3.7.0 (Suíte CrystalDiskMark & CrystalDiskInfo Nativa)",
-  "changelog": [
-    "Nova Suíte de Armazenamento completa integrada no Painel (MTZ Disk Suite)",
-    "Motor nativo de CrystalDiskMark com Direct I/O (FILE_FLAG_NO_BUFFERING) medindo leitura/escrita sequencial e 4K IOPS",
-    "Diagnóstico avançado de CrystalDiskInfo com leitura completa de saúde S.M.A.R.T., desgaste de células e temperatura de pico",
-    "Exportação de relatório técnico completo em formato TXT direto para a Área de Trabalho",
-    "Atalhos oficiais de 1 clique para baixar os utilitários portáteis originais do Crystal Dew World",
-    "Botões dedicados CRYSTAL BENCH e S.M.A.R.T. INFO adicionados no card de discos em Sensores"
-  ],
-  "downloadUrl": "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe",
-  "zipUrl": "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel-v3.0.zip",
-  "repository": "https://github.com/Mathzvinicius/MathzControlPanel"
+﻿{
+    "version":  "3.7.1",
+    "versionCode":  371,
+    "releaseDate":  "2026-11-03",
+    "title":  "Mathz Control Panel v3.7.1 Pro",
+    "changelog":  [
+                      "Correcao critica do clique duplo na Area de Trabalho e Explorador de Arquivos (retangulo 4x4 px e SPI_SETMOUSE 0x0004)",
+                      "Preservacao absoluta da resposta 1:1 MarkC Raw Input com mouse e touchpad funcionais",
+                      "Suite completa de Benchmarks Direct I/O (CrystalDiskMark) e Saude SMART de Disco (CrystalDiskInfo)",
+                      "Monitoramento de temperatura em tempo real de CPU, Placa de Video e SSDs NVMe/SATA",
+                      "Otimizacoes completas de latencia e kernel sem degradacao de funcionalidades do Windows"
+                  ],
+    "downloadUrl":  "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe",
+    "zipUrl":  "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel-v3.0.zip",
+    "repository":  "https://github.com/Mathzvinicius/MathzControlPanel"
 }

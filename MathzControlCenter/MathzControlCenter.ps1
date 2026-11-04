@@ -700,7 +700,7 @@ foreach ($fDir in $fontCandidates) {
                             <ProgressBar Name="PbRam" Height="3" Background="{DynamicResource Line}" Foreground="#FFFFFF" BorderThickness="0" Value="0" Margin="0,2,0,5"/>
 
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                <TextBlock Text="v3.7 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
+                                <TextBlock Text="v3.7.1 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
                                 <Button Name="BtnCheckUpdates" Style="{StaticResource OutlineButton}" Content="VERIFICAR ATUALIZAR" FontSize="8.5" Padding="6,2" Margin="6,0,0,0" ToolTip="Verificar novas versoes no servidor oficial"/>
                             </StackPanel>
                         </StackPanel>
@@ -2286,7 +2286,7 @@ foreach ($fDir in $fontCandidates) {
                                        FontFamily="{DynamicResource Heading}" FontSize="17" FontWeight="Bold" Foreground="#FFFFFF"
                                        HorizontalAlignment="Center" Margin="0,0,0,6"/>
 
-                                <TextBlock Text="v3.7 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
+                                <TextBlock Text="v3.7.1 PRO &#x00B7; MathzOS" Foreground="{DynamicResource Faint}" FontSize="9" VerticalAlignment="Center"/>
                                        FontFamily="{DynamicResource Heading}" FontSize="13" Foreground="#FF1E27"
                                        HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
@@ -3131,7 +3131,7 @@ function Show-ModalUpdate([string]$vTitle, [string]$vNum, [string]$vChangelog, [
 }
 
 function Check-MathzUpdate([bool]$interactive = $false) {
-    $currentVersionCode = 370
+    $currentVersionCode = 371
     $updateManifestUrl = "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/version.json"
 
     if ($interactive) {
@@ -3147,8 +3147,8 @@ function Check-MathzUpdate([bool]$interactive = $false) {
             Log-Hud "Nova versao encontrada: $($json.version)!"
         } else {
             if ($interactive) {
-                Log-Hud "Voce ja esta com a versao mais recente instalada (v3.7.0 Pro)!"
-                [System.Windows.MessageBox]::Show("Voce ja esta utilizando a versao mais recente do Painel de Comando MTZ (v3.7.0 Pro).`n`nNenhuma atualizacao necessaria no momento.", "Painel de Comando MTZ", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information) | Out-Null
+                Log-Hud "Voce ja esta com a versao mais recente instalada (v3.7.1 Pro)!"
+                [System.Windows.MessageBox]::Show("Voce ja esta utilizando a versao mais recente do Painel de Comando MTZ (v3.7.1 Pro).`n`nNenhuma atualizacao necessaria no momento.", "Painel de Comando MTZ", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information) | Out-Null
             }
         }
     } catch {
@@ -5325,6 +5325,11 @@ function Invoke-IsoTweakMouse {
         Set-ItemProperty -Path $reg -Name "MouseThreshold1" -Value "0" -Type String -Force
         Set-ItemProperty -Path $reg -Name "MouseThreshold2" -Value "0" -Type String -Force
         Set-ItemProperty -Path $reg -Name "MouseSensitivity" -Value "10" -Type String -Force
+        Set-ItemProperty -Path $reg -Name "DoubleClickWidth" -Value "4" -Type String -Force
+        Set-ItemProperty -Path $reg -Name "DoubleClickHeight" -Value "4" -Type String -Force
+        Set-ItemProperty -Path $reg -Name "DoubleClickSpeed" -Value "500" -Type String -Force
+        Set-ItemProperty -Path $reg -Name "MouseHoverWidth" -Value "4" -Type String -Force
+        Set-ItemProperty -Path $reg -Name "MouseHoverHeight" -Value "4" -Type String -Force
         Set-ItemProperty -Path $reg -Name "SmoothMouseXCurve" -Value $curveX -Type Binary -Force
         Set-ItemProperty -Path $reg -Name "SmoothMouseYCurve" -Value $curveY -Type Binary -Force
     }
@@ -5333,8 +5338,13 @@ function Invoke-IsoTweakMouse {
     try {
         $SPIF = 0x01 -bor 0x02
         $mouseParams = [int[]]@(0, 0, 0)
-        [MathzMouseOptimizer]::SystemParametersInfo(0x001D, 0, $mouseParams, $SPIF) | Out-Null
+        # SPI_SETMOUSE = 0x0004
+        [MathzMouseOptimizer]::SystemParametersInfo(0x0004, 0, $mouseParams, $SPIF) | Out-Null
+        # SPI_SETMOUSESPEED = 0x0071 (10 = 6/11 notch)
         [MathzMouseOptimizer]::SystemParametersInfo(0x0071, 0, [IntPtr]10, $SPIF) | Out-Null
+        # Garante area e tolerancia de clique duplo padrao do Windows (4x4 pixels)
+        [MathzMouseOptimizer]::SystemParametersInfo(0x001D, 4, [IntPtr]::Zero, $SPIF) | Out-Null
+        [MathzMouseOptimizer]::SystemParametersInfo(0x001E, 4, [IntPtr]::Zero, $SPIF) | Out-Null
     } catch {}
 
     Log-Hud "Curva MarkC 1:1 e zero aceleração aplicadas (mouse e touchpad protegidos)!"
@@ -5512,14 +5522,22 @@ function Invoke-RestoreDefaultTweaks {
             Set-ItemProperty -Path $reg -Name "MouseThreshold1" -Value "6" -Type String -Force -ErrorAction SilentlyContinue
             Set-ItemProperty -Path $reg -Name "MouseThreshold2" -Value "10" -Type String -Force -ErrorAction SilentlyContinue
             Set-ItemProperty -Path $reg -Name "MouseSensitivity" -Value "10" -Type String -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $reg -Name "DoubleClickWidth" -Value "4" -Type String -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $reg -Name "DoubleClickHeight" -Value "4" -Type String -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $reg -Name "DoubleClickSpeed" -Value "500" -Type String -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $reg -Name "MouseHoverWidth" -Value "4" -Type String -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $reg -Name "MouseHoverHeight" -Value "4" -Type String -Force -ErrorAction SilentlyContinue
             Remove-ItemProperty -Path $reg -Name "SmoothMouseXCurve" -Force -ErrorAction SilentlyContinue
             Remove-ItemProperty -Path $reg -Name "SmoothMouseYCurve" -Force -ErrorAction SilentlyContinue
         }
         try {
             $SPIF = 0x01 -bor 0x02
             $defaultMouseParams = [int[]]@(6, 10, 1)
-            [MathzMouseOptimizer]::SystemParametersInfo(0x001D, 0, $defaultMouseParams, $SPIF) | Out-Null
+            # SPI_SETMOUSE = 0x0004
+            [MathzMouseOptimizer]::SystemParametersInfo(0x0004, 0, $defaultMouseParams, $SPIF) | Out-Null
             [MathzMouseOptimizer]::SystemParametersInfo(0x0071, 0, [IntPtr]10, $SPIF) | Out-Null
+            [MathzMouseOptimizer]::SystemParametersInfo(0x001D, 4, [IntPtr]::Zero, $SPIF) | Out-Null
+            [MathzMouseOptimizer]::SystemParametersInfo(0x001E, 4, [IntPtr]::Zero, $SPIF) | Out-Null
         } catch {}
 
         # 2. HAGS Padrao (1)
