@@ -363,17 +363,20 @@ function Apply-MathzCustomColors {
     }
 
     # 3. Recarrega via API nativa User32 instantaneamente sem cache
-    if (-not ([System.Management.Automation.PSTypeName]'WinCursorEngine').Type) {
+    if (-not ([System.Management.Automation.PSTypeName]'WinCursorEngineV2').Type) {
         $csharp = @'
         using System;
         using System.Runtime.InteropServices;
 
-        public class WinCursorEngine {
+        public class WinCursorEngineV2 {
             [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
             public static extern IntPtr LoadImage(IntPtr hinst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);
 
             [DllImport("user32.dll", SetLastError = true)]
             public static extern bool SetSystemCursor(IntPtr hcur, uint id);
+
+            [DllImport("user32.dll", SetLastError = true)]
+            public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, IntPtr pvParam, uint fWinIni);
 
             [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
             public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, IntPtr wParam, string lParam, uint fuFlags, uint uTimeout, out IntPtr lpdwResult);
@@ -383,6 +386,8 @@ function Apply-MathzCustomColors {
             public const uint WM_SETTINGCHANGE = 0x001A;
             public const uint HWND_BROADCAST = 0xFFFF;
             public const uint SMTO_ABORTIFHUNG = 0x0002;
+            public const uint SPI_SETCURSORS = 0x0057;
+
             public const uint OCR_NORMAL      = 32512;
             public const uint OCR_IBEAM       = 32513;
             public const uint OCR_WAIT        = 32514;
@@ -419,11 +424,11 @@ function Apply-MathzCustomColors {
                     { "mathz_appstarting.cur", OCR_APPSTARTING }
                 };
 
+                // 1. Substitui cada cursor diretamente na memoria RAM do User32
                 foreach (var kvp in mapping) {
                     try {
                         string curFile = System.IO.Path.Combine(dir, kvp.Key);
                         if (System.IO.File.Exists(curFile)) {
-                            // Carrega SEMPRE direto do disco (burlar cache de nome do User32)
                             IntPtr h = LoadImage(IntPtr.Zero, curFile, IMAGE_CURSOR, 0, 0, LR_LOADFROMFILE);
                             if (h != IntPtr.Zero) {
                                 SetSystemCursor(h, kvp.Value);
@@ -432,6 +437,12 @@ function Apply-MathzCustomColors {
                     } catch { }
                 }
 
+                // 2. Notifica Windows DWM e User32 para recarregar o esquema ativo do registro (0x0057, 0, Zero, 0)
+                try {
+                    SystemParametersInfo(SPI_SETCURSORS, 0, IntPtr.Zero, 0);
+                } catch { }
+
+                // 3. Notifica todas as janelas do sistema operacional
                 try {
                     IntPtr res;
                     SendMessageTimeout((IntPtr)HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, "Cursors", SMTO_ABORTIFHUNG, 2000, out res);
@@ -470,6 +481,11 @@ function Apply-MathzCustomColors {
                     } catch { }
                 }
 
+                // 2. Notifica Windows DWM e User32 para recarregar cursores padrao do sistema
+                try {
+                    SystemParametersInfo(SPI_SETCURSORS, 0, IntPtr.Zero, 0);
+                } catch { }
+
                 try {
                     IntPtr res;
                     SendMessageTimeout((IntPtr)HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, "Cursors", SMTO_ABORTIFHUNG, 2000, out res);
@@ -480,7 +496,9 @@ function Apply-MathzCustomColors {
         Add-Type -TypeDefinition $csharp -ErrorAction SilentlyContinue
     }
 
-    if (([System.Management.Automation.PSTypeName]'WinCursorEngine').Type) {
+    if (([System.Management.Automation.PSTypeName]'WinCursorEngineV2').Type) {
+        [WinCursorEngineV2]::ReloadLive("$targetDir")
+    } elseif (([System.Management.Automation.PSTypeName]'WinCursorEngine').Type) {
         [WinCursorEngine]::ReloadLive("$targetDir")
     } elseif (([System.Management.Automation.PSTypeName]'WinCursorAPI').Type) {
         [WinCursorAPI]::ReloadLive("$targetDir")
@@ -525,7 +543,9 @@ function Restore-MathzDefaultCursors {
         }
     }
 
-    if (([System.Management.Automation.PSTypeName]'WinCursorEngine').Type) {
+    if (([System.Management.Automation.PSTypeName]'WinCursorEngineV2').Type) {
+        [WinCursorEngineV2]::RestoreLive()
+    } elseif (([System.Management.Automation.PSTypeName]'WinCursorEngine').Type) {
         [WinCursorEngine]::RestoreLive()
     } elseif (([System.Management.Automation.PSTypeName]'WinCursorAPI').Type) {
         [WinCursorAPI]::RestoreLive()

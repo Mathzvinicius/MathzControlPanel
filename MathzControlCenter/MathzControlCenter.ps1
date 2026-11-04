@@ -3639,7 +3639,8 @@ function Open-CrystalOfficial([string]$app) {
 }
 
 function Start-MathzSelfUpdate {
-    $targetUrl = if ($global:pendingUpdateUrl) { $global:pendingUpdateUrl } else { "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe" }
+    $fallbackUrl = "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe"
+    $targetUrl = if ([string]::IsNullOrWhiteSpace($global:pendingUpdateUrl)) { $fallbackUrl } else { [string]$global:pendingUpdateUrl }
 
     Show-ModalOverlay "BAIXANDO ATUALIZACAO MTZ" "Transferindo nova versao dos servidores oficiais do Painel..."
 
@@ -3648,8 +3649,8 @@ function Start-MathzSelfUpdate {
     $disp.Add_Tick({
         $this.Stop()
         try {
-            $downloadUrl = if ($global:pendingUpdateUrl) { $global:pendingUpdateUrl } else { "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe" }
-            if ([string]::IsNullOrWhiteSpace($downloadUrl)) {
+            $downloadUrl = if ([string]::IsNullOrWhiteSpace($global:pendingUpdateUrl)) { "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe" } else { [string]$global:pendingUpdateUrl }
+            if ([string]::IsNullOrWhiteSpace($downloadUrl) -or $downloadUrl -notmatch '^https?://') {
                 $downloadUrl = "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe"
             }
 
@@ -6325,6 +6326,11 @@ if ($btnApplyCursorColors) {
                 if ($cg) {
                     . $cg
                     Apply-MathzCustomColors -InsideHex $curIn -OutlineHex $curOut | Out-Null
+                    try {
+                        [System.Windows.Input.Mouse]::OverrideCursor = [System.Windows.Input.Cursors]::Wait
+                        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
+                        [System.Windows.Input.Mouse]::OverrideCursor = $null
+                    } catch { }
                     Log-Hud "Cursores customizados ATIVADOS no Windows! (Linha: $curOut | Fundo: $curIn)"
                 } else {
                     Log-Hud "CursorGenerator.ps1 nao encontrado no diretorio de instalacao."
@@ -6396,6 +6402,11 @@ if ($btnResetDefaultCursors) {
                     [WinCursorAPI]::RestoreLive()
                 }
             }
+            try {
+                [System.Windows.Input.Mouse]::OverrideCursor = [System.Windows.Input.Cursors]::Wait
+                [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
+                [System.Windows.Input.Mouse]::OverrideCursor = $null
+            } catch { }
             Update-CursorLivePreview "#050508" "#FF1E27"
             Update-MathzTweaksChecklist
             Log-Hud "Cursores padrao originais do Windows restaurados com sucesso!"
