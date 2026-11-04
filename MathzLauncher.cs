@@ -12,18 +12,18 @@ using System.Management.Automation.Runspaces;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("Painel de Comando MTZ")]
-[assembly: AssemblyDescription("Sistema de Otimização, Tweaks e Desempenho Windows MTZ")]
-[assembly: AssemblyCompany("MTZ")]
+[assembly: AssemblyDescription("Sistema de Otimizacao, Tweaks e Desempenho Windows MTZ")]
+[assembly: AssemblyCompany("MTZ Performance")]
 [assembly: AssemblyProduct("Painel de Comando MTZ")]
-[assembly: AssemblyCopyright("Copyright © MTZ 2026")]
-[assembly: AssemblyVersion("3.7.0.0")]
-[assembly: AssemblyFileVersion("3.7.0.0")]
+[assembly: AssemblyCopyright("Copyright MTZ 2026")]
+[assembly: AssemblyVersion("3.7.1.0")]
+[assembly: AssemblyFileVersion("3.7.1.0")]
 
 namespace MathzControl
 {
     public static class Program
     {
-        private const string AppVersion = "v3.7.0-standalone";
+        private const string AppVersion = "v3.7.1-standalone";
         private static Form _splash;
 
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
@@ -92,8 +92,8 @@ namespace MathzControl
                 catch (Exception)
                 {
                     MessageBox.Show(
-                        "O Painel de Comando MTZ necessita de privilégios de Administrador para gerenciar hardware, serviços e otimizações do Windows.\n\nPor favor, confirme a elevação de Administrador (UAC) para continuar.",
-                        "Permissão de Administrador Requerida",
+                        "O Painel de Comando MTZ necessita de privilegios de Administrador para gerenciar hardware, servicos e otimizacoes do Windows.\n\nPor favor, confirme a elevacao de Administrador (UAC) para continuar.",
+                        "Permissao de Administrador Requerida",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning
                     );
@@ -252,7 +252,7 @@ namespace MathzControl
                             CloseSplash();
                             MessageBox.Show(
                                 "Painel de Comando MTZ instalado com sucesso no seu Windows!\n\n" +
-                                "O atalho foi criado na sua Área de Trabalho e no Menu Iniciar.",
+                                "O atalho foi criado na sua Area de Trabalho e no Menu Iniciar.",
                                 "Painel de Comando MTZ",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Information
@@ -265,8 +265,8 @@ namespace MathzControl
                 {
                     CloseSplash();
                     MessageBox.Show(
-                        "Não foi possível inicializar o Painel de Comando MTZ.\n\n" +
-                        "Certifique-se de que os arquivos do aplicativo foram extraídos corretamente.",
+                        "Nao foi possivel inicializar o Painel de Comando MTZ.\n\n" +
+                        "Certifique-se de que os arquivos do aplicativo foram extraidos corretamente.",
                         "Painel de Comando MTZ",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error
@@ -388,7 +388,7 @@ namespace MathzControl
                     if (key != null)
                     {
                         key.SetValue("DisplayName", "Painel de Comando MTZ");
-                        key.SetValue("DisplayVersion", "3.4 Pro");
+                        key.SetValue("DisplayVersion", "3.7.1 Pro");
                         key.SetValue("Publisher", "MTZ Performance");
                         key.SetValue("DisplayIcon", iconPath);
                         key.SetValue("InstallLocation", installDir);
@@ -481,7 +481,7 @@ namespace MathzControl
             borderPanel.Controls.Add(lblTitle);
 
             Label lblSub = new Label();
-            lblSub.Text = "Sistema de Otimização & Desempenho";
+            lblSub.Text = "Sistema de Otimizacao & Desempenho";
             lblSub.Font = new Font("Segoe UI", 9f, FontStyle.Regular);
             lblSub.ForeColor = Color.FromArgb(140, 140, 140);
             lblSub.TextAlign = ContentAlignment.MiddleCenter;
