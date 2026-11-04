@@ -3161,7 +3161,7 @@ function Show-ModalUpdate([string]$vTitle, [string]$vNum, [string]$vChangelog, [
 }
 
 function Check-MathzUpdate([bool]$interactive = $false) {
-    $currentVersionCode = 372
+    $currentVersionCode = 373
     $updateManifestUrl = "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/version.json"
 
     if ($interactive) {
@@ -3511,8 +3511,7 @@ function Open-CrystalOfficial([string]$app) {
 }
 
 function Start-MathzSelfUpdate {
-    if (-not $global:pendingUpdateUrl) { return }
-    $url = $global:pendingUpdateUrl
+    $targetUrl = if ($global:pendingUpdateUrl) { $global:pendingUpdateUrl } else { "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe" }
 
     Show-ModalOverlay "BAIXANDO ATUALIZACAO MTZ" "Transferindo nova versao dos servidores oficiais do Painel..."
 
@@ -3521,15 +3520,22 @@ function Start-MathzSelfUpdate {
     $disp.Add_Tick({
         $this.Stop()
         try {
+            $downloadUrl = if ($global:pendingUpdateUrl) { $global:pendingUpdateUrl } else { "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe" }
+            if ([string]::IsNullOrWhiteSpace($downloadUrl)) {
+                $downloadUrl = "https://raw.githubusercontent.com/Mathzvinicius/MathzControlPanel/main/MathzControlPanel.exe"
+            }
+
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor [System.Net.SecurityProtocolType]::Tls11 -bor [System.Net.SecurityProtocolType]::Tls
+
             $tempExe = Join-Path $env:TEMP "MathzControlPanel_New.exe"
-            if (Test-Path $tempExe) { Remove-Item $tempExe -Force }
+            if (Test-Path $tempExe) { Remove-Item $tempExe -Force -ErrorAction SilentlyContinue }
 
             $wc = New-Object System.Net.WebClient
             $wc.Headers.Add("User-Agent", "MathzControlPanel-Updater")
-            $wc.DownloadFile($url, $tempExe)
+            $wc.DownloadFile($downloadUrl, $tempExe)
 
             if (-not (Test-Path $tempExe) -or (Get-Item $tempExe).Length -lt 100KB) {
-                throw "Arquivo de atualizacao baixado esta incompleto."
+                throw "Arquivo de atualizacao baixado esta incompleto ou corrompido."
             }
 
             $runningExe = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
