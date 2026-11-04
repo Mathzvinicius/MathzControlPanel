@@ -2453,19 +2453,19 @@ foreach ($fDir in $fontCandidates) {
             <!-- ========================================================================= -->
             <!-- OVERLAY MODAL: TELA DE CARREGAMENTO & AVISO DE SUCESSO NO CENTRO DO PAINEL -->
             <!-- ========================================================================= -->
-            <Grid Name="OverlayModalContainer" Grid.Column="0" Grid.ColumnSpan="2" Visibility="Collapsed" Panel.ZIndex="999">
+            <Grid Name="OverlayModalContainer" Grid.Column="0" Grid.ColumnSpan="2" Visibility="Visible" Panel.ZIndex="999">
                 <!-- Dimmer de Fundo Translucido Escuro -->
-                <Border Name="OverlayDimmer" Background="#DF040406" Opacity="0"/>
+                <Border Name="OverlayDimmer" Background="#DF040406" Opacity="1"/>
 
                 <!-- CARD CENTRAL FLUTUANTE (EFEITO VIDRO GLOW MTZ) -->
                 <Border Name="CardModalCentral" Width="440" HorizontalAlignment="Center" VerticalAlignment="Center"
                         Background="#101014" BorderBrush="#FF1E27" BorderThickness="1.5" CornerRadius="18"
-                        Padding="32,28" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        Padding="32,28" Opacity="1" RenderTransformOrigin="0.5,0.5">
                     <Border.Effect>
                         <DropShadowEffect Color="#FF1E27" BlurRadius="50" ShadowDepth="0" Opacity="0.4"/>
                     </Border.Effect>
                     <Border.RenderTransform>
-                        <ScaleTransform x:Name="ModalCardScale" ScaleX="0.9" ScaleY="0.9"/>
+                        <ScaleTransform x:Name="ModalCardScale" ScaleX="1.0" ScaleY="1.0"/>
                     </Border.RenderTransform>
 
                     <StackPanel HorizontalAlignment="Center">
@@ -2485,12 +2485,12 @@ foreach ($fDir in $fontCandidates) {
                             </Grid>
 
                             <!-- Titulo do Carregamento -->
-                            <TextBlock Name="TxtModalLoadingTitle" Text="APLICANDO OTIMIZA&#x00C7;&#x00D5;ES MTZ"
+                            <TextBlock Name="TxtModalLoadingTitle" Text="INICIALIZANDO PAINEL DE COMANDO MTZ"
                                        FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"
                                        HorizontalAlignment="Center" Margin="0,0,0,8"/>
 
                             <!-- Mensagem de Etapa Dinamica -->
-                            <TextBlock Name="TxtModalLoadingSub" Text="Sintonizando registros de lat&#x00EA;ncia e servi&#x00E7;os do Windows..."
+                            <TextBlock Name="TxtModalLoadingSub" Text="Calibrando sensores de hardware, clocks e telemetria..."
                                        FontSize="12" Foreground="#D6D6D6" HorizontalAlignment="Center"
                                        TextAlignment="Center" MaxWidth="360" TextWrapping="Wrap" Margin="0,0,0,20"/>
 
@@ -6944,15 +6944,14 @@ $window.Add_Loaded({
         [WindowResizer]::Attach($helper.Handle, 7)
     } catch {}
 
+    # Inicia animacao do anel giratorio do Overlay de Carregamento
+    Start-ModalRingSpinner
+
     # Aplica efeito acrilico translucido e tema
     Apply-PanelThemeUI
     
-    # Atualiza dados de telemetria e otimizacoes
-    Update-RealHardwareUI
-    Update-MathzTweaksChecklist
+    # Pre-configura cursores e telemetria
     Update-CursorLivePreview "#050508" "#FF1E27"
-    
-    # Define aba inicial
     Set-TabActive "Clocks"
     
     # Pre-popula historico da telemetria com amostras base para grafico ja abrir desenhado
@@ -6993,20 +6992,47 @@ $window.Add_Loaded({
             $headerLiveDot.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $animPulseH)
         }
     } catch {}
-    
-    # Inicia Timer de Telemetria
-    $global:hwTimer.Start()
-    
-    Log-Hud "Painel de Comando MTZ pronto e operacional!"
-    
-    # Checagem silenciosa de atualizacao em segundo plano apos 4 segundos
-    $timerAutoUpdate = New-Object System.Windows.Threading.DispatcherTimer
-    $timerAutoUpdate.Interval = [TimeSpan]::FromSeconds(4)
-    $timerAutoUpdate.Add_Tick({
-        $timerAutoUpdate.Stop()
-        Check-MathzUpdate -interactive $false
+
+    # Sequencia de Carregamento e Calibracao do Overlay Inicial
+    $global:startupStep = 0
+    $startupTimer = New-Object System.Windows.Threading.DispatcherTimer
+    $startupTimer.Interval = [TimeSpan]::FromMilliseconds(260)
+    $startupTimer.Add_Tick({
+        $global:startupStep++
+        switch ($global:startupStep) {
+            1 {
+                if ($txtModalLoadingSub) { $txtModalLoadingSub.Text = "Detectando processador, clocks e sensores de temperatura..." }
+                Update-RealHardwareUI
+            }
+            2 {
+                if ($txtModalLoadingSub) { $txtModalLoadingSub.Text = "Verificando integridade das otimizacoes e telemetria..." }
+                Update-MathzTweaksChecklist
+            }
+            3 {
+                if ($txtModalLoadingSub) { $txtModalLoadingSub.Text = "Sintonizando historico de desempenho e latencia ultra-baixa..." }
+                Update-TelemetryGraph -1 -1
+            }
+            4 {
+                if ($txtModalLoadingSub) { $txtModalLoadingSub.Text = "Painel de Comando MTZ pronto e calibrado!" }
+            }
+            5 {
+                $startupTimer.Stop()
+                Hide-ModalOverlay
+                $global:hwTimer.Start()
+                Log-Hud "STATUS // Painel de Comando MTZ pronto e operacional!"
+                
+                # Checagem silenciosa de atualizacao em segundo plano apos 4 segundos
+                $timerAutoUpdate = New-Object System.Windows.Threading.DispatcherTimer
+                $timerAutoUpdate.Interval = [TimeSpan]::FromSeconds(4)
+                $timerAutoUpdate.Add_Tick({
+                    $timerAutoUpdate.Stop()
+                    Check-MathzUpdate -interactive $false
+                })
+                $timerAutoUpdate.Start()
+            }
+        }
     })
-    $timerAutoUpdate.Start()
+    $startupTimer.Start()
 })
 
 $window.Add_Closed({
