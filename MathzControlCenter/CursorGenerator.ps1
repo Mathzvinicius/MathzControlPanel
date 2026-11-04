@@ -363,12 +363,12 @@ function Apply-MathzCustomColors {
     }
 
     # 3. Recarrega via API nativa User32 instantaneamente sem cache
-    if (-not ([System.Management.Automation.PSTypeName]'WinCursorEngineV2').Type) {
+    if (-not ([System.Management.Automation.PSTypeName]'WinCursorEngineV3').Type) {
         $csharp = @'
         using System;
         using System.Runtime.InteropServices;
 
-        public class WinCursorEngineV2 {
+        public class WinCursorEngineV3 {
             [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
             public static extern IntPtr LoadImage(IntPtr hinst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);
 
@@ -424,7 +424,7 @@ function Apply-MathzCustomColors {
                     { "mathz_appstarting.cur", OCR_APPSTARTING }
                 };
 
-                // 1. Substitui cada cursor diretamente na memoria RAM do User32
+                // 1. Substitui cada cursor diretamente na memoria RAM do User32 (SetSystemCursor)
                 foreach (var kvp in mapping) {
                     try {
                         string curFile = System.IO.Path.Combine(dir, kvp.Key);
@@ -437,12 +437,10 @@ function Apply-MathzCustomColors {
                     } catch { }
                 }
 
-                // 2. Notifica Windows DWM e User32 para recarregar o esquema ativo do registro (0x0057, 0, Zero, 0)
-                try {
-                    SystemParametersInfo(SPI_SETCURSORS, 0, IntPtr.Zero, 0);
-                } catch { }
+                // NOTA: NUNCA chamar SystemParametersInfo(SPI_SETCURSORS, 0, NULL, 0) aqui!
+                // SPI_SETCURSORS eh a funcao Win32 usada para resetar os cursores modificados por SetSystemCursor.
 
-                // 3. Notifica todas as janelas do sistema operacional
+                // 2. Notifica todas as janelas do sistema operacional
                 try {
                     IntPtr res;
                     SendMessageTimeout((IntPtr)HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, "Cursors", SMTO_ABORTIFHUNG, 2000, out res);
@@ -481,7 +479,7 @@ function Apply-MathzCustomColors {
                     } catch { }
                 }
 
-                // 2. Notifica Windows DWM e User32 para recarregar cursores padrao do sistema
+                // 2. Recarrega os cursores padrao do sistema do Windows via SPI_SETCURSORS
                 try {
                     SystemParametersInfo(SPI_SETCURSORS, 0, IntPtr.Zero, 0);
                 } catch { }
@@ -496,7 +494,9 @@ function Apply-MathzCustomColors {
         Add-Type -TypeDefinition $csharp -ErrorAction SilentlyContinue
     }
 
-    if (([System.Management.Automation.PSTypeName]'WinCursorEngineV2').Type) {
+    if (([System.Management.Automation.PSTypeName]'WinCursorEngineV3').Type) {
+        [WinCursorEngineV3]::ReloadLive("$targetDir")
+    } elseif (([System.Management.Automation.PSTypeName]'WinCursorEngineV2').Type) {
         [WinCursorEngineV2]::ReloadLive("$targetDir")
     } elseif (([System.Management.Automation.PSTypeName]'WinCursorEngine').Type) {
         [WinCursorEngine]::ReloadLive("$targetDir")
@@ -543,7 +543,9 @@ function Restore-MathzDefaultCursors {
         }
     }
 
-    if (([System.Management.Automation.PSTypeName]'WinCursorEngineV2').Type) {
+    if (([System.Management.Automation.PSTypeName]'WinCursorEngineV3').Type) {
+        [WinCursorEngineV3]::RestoreLive()
+    } elseif (([System.Management.Automation.PSTypeName]'WinCursorEngineV2').Type) {
         [WinCursorEngineV2]::RestoreLive()
     } elseif (([System.Management.Automation.PSTypeName]'WinCursorEngine').Type) {
         [WinCursorEngine]::RestoreLive()
