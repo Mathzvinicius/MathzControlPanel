@@ -27,7 +27,7 @@ Central de Alta Performance, Telemetria em Tempo Real, Otimizacao de Hardware e 
 
 * **Central Termica de Sensores em Tempo Real:**
   * Monitoramento continuo de temperaturas: **Processador (CPU Package/Tctl/ACPI)**, **Placa de Video (GPU Core/VRAM)** e **Discos de Armazenamento (NVMe/SATA)**.
-  * Indicador de estabilidade termica com alertas visuais configuraveis (75Â°C, 80Â°C e 85Â°C).
+  * Indicador de estabilidade termica com alertas visuais configuraveis (75°C, 80°C e 85°C).
 
 * **Zero Mouse Delay & Raw Input 1:1 Seguro:**
   * Desativacao completa de aceleracao angular (*Enhanced Pointer Precision OFF*).

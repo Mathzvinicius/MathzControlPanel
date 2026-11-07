@@ -5649,6 +5649,7 @@ function Invoke-AllIsoTweaks {
     try { Invoke-IsoTweakTelemetry } catch { $failedList.Add("Telemetria") }
     try { Invoke-IsoTweakExplorer } catch { $failedList.Add("Explorer Menus") }
     try { Invoke-IsoTweakCursor } catch { $failedList.Add("Cursores Mathz") }
+    try { Set-CpuRealClock 100 100 "MATHZ EXTREME (persistente)" } catch { $failedList.Add("CPU Performance Guard") }
 
     Update-MathzTweaksChecklist
 
@@ -5675,6 +5676,8 @@ function Invoke-AllIsoTweaks {
 function Invoke-RestoreDefaultTweaks {
     Log-Hud "Restaurando configuracoes de fabrica do Windows..."
     try {
+        Unregister-ScheduledTask -TaskName 'MTZ CPU Performance Guard' -Confirm:$false -ErrorAction SilentlyContinue
+
         # 1. Mouse Padrao
         $targets = @("HKCU:\Control Panel\Mouse")
         if (Test-Path "Registry::HKEY_USERS\.DEFAULT\Control Panel\Mouse") {
@@ -5948,6 +5951,22 @@ function Set-CpuRealClock([int]$minPercent, [int]$maxPercent, [string]$profileNa
             powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR be337238-0d82-4146-a960-4f3749d470c7 0 2>$null
         }
         powercfg /setactive SCHEME_CURRENT 2>$null
+
+        # Persiste o perfil extremo fora da pasta do painel, para sobreviver à remoção do EXE.
+        if ($maxPercent -ge 100) {
+            $guardSource = Join-Path $PSScriptRoot 'MTZ-CPUPerformanceGuard.ps1'
+            $guardDir = Join-Path $env:ProgramData 'Mathz'
+            $guardTarget = Join-Path $guardDir 'MTZ-CPUPerformanceGuard.ps1'
+            if (Test-Path $guardSource) {
+                New-Item -ItemType Directory -Path $guardDir -Force | Out-Null
+                Copy-Item $guardSource $guardTarget -Force
+                $taskAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\Mathz\MTZ-CPUPerformanceGuard.ps1" -Mode Extreme'
+                $taskTrigger = @((New-ScheduledTaskTrigger -AtStartup), (New-ScheduledTaskTrigger -AtLogOn))
+                $taskPrincipal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+                Register-ScheduledTask -TaskName 'MTZ CPU Performance Guard' -Action $taskAction -Trigger $taskTrigger -Principal $taskPrincipal -Force | Out-Null
+                Log-Hud 'Guardião persistente MTZ instalado: o perfil extremo será reaplicado no boot/logon.'
+            }
+        }
 
         Update-RealHardwareUI
         Log-Hud "Clock da CPU ajustado: Min $minPercent% / Max $maxPercent% ($profileName)"
